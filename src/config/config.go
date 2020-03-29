@@ -12,11 +12,13 @@ type Config struct {
 	RulerAttrs          string
 	NumbersColor        string
 	NumbersAttrs        string
+	ViewRefreshSeconds  int
 }
 
 func NewDefaultConfig() *Config {
 	return &Config{
 		SpacesPerTab:       4,
+		ViewRefreshSeconds: 5,
 		SideArrowLeft:      '\u25C0',
 		SideArrowRight:     '\u25B6',
 		//SideArrowLeft:      '\u2B05',

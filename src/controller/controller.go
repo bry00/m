@@ -9,40 +9,50 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 	"unicode/utf8"
 )
 
 type Controller struct {
-	fileName       string
+	fileName      *string
+	title         *string
 	conf          *config.Config
 	maxLineLength  int
 	view           view.TheView
 	data          *buffers.BufferedData
+	dataReady      bool
 }
+
 
 func NewController(fileName string, data *buffers.BufferedData, view view.TheView, conf *config.Config) *Controller {
 	var (
-		filePath string
-		err      error
+		filePath *string = nil
 	)
 	if len(fileName) > 0 {
-		filePath, err = filepath.Abs(fileName)
-		if err != nil {
+		if absPath, err := filepath.Abs(fileName);  err != nil {
 			log.Fatal(err)
-		}
-		if !fileExists(filePath) {
-			log.Fatalf("File \"%s\" does not exist!\n", filePath)
+		} else {
+			if !fileExists(absPath) {
+				log.Fatalf("File \"%s\" does not exist!\n", absPath)
+			}
+			filePath = &absPath
 		}
 	}
 	result := &Controller {
 		fileName:      filePath,
+		title:         nil,
 		conf:          conf,
 		maxLineLength: 0,
 		data:          data,
 		view:          view,
+		dataReady:     false,
 	}
 	view.SetController(result)
 	return result
+}
+
+func (ctl *Controller) DataReady() bool {
+	return ctl.dataReady
 }
 
 func (ctl *Controller) GetConfig() *config.Config {
@@ -66,16 +76,16 @@ func (ctl *Controller) NoOfLines() int {
 }
 
 func (ctl *Controller) GetFileNameTitle() string {
-	if len(ctl.fileName) == 0 {
-		return "<<stdin>>"
-	} else {
-		if home, err := os.UserHomeDir(); err == nil && strings.HasPrefix(ctl.fileName, home) {
-			return "~" + strings.TrimPrefix(ctl.fileName, home)
+	if ctl.title == nil {
+		if ctl.fileName == nil {
+			return "<<stdin>>"
 		}
-		return ctl.fileName
+		if home, err := os.UserHomeDir(); err == nil && strings.HasPrefix(*ctl.fileName, home) {
+			return "~" + strings.TrimPrefix(*ctl.fileName, home)
+		}
+		return *ctl.fileName
 	}
-
-	return ctl.fileName
+	return *ctl.title
 }
 
 
@@ -159,20 +169,34 @@ func (ctl *Controller)readFile() {
 		file *os.File
 		err  error
 	)
-	_, _, _, height := ctl.view.GetDisplayRect()
 
-	if len(ctl.fileName) > 0 {
-		if file, err = os.Open(ctl.fileName); err != nil {
+	if ctl.fileName != nil {
+		ctl.view.GetStatusBar().Status(view.StatusReading)
+		if file, err = os.Open(*ctl.fileName); err != nil {
 			log.Fatal(err)
 		} else {
 			defer file.Close()
 		}
 	} else {
+		ctl.view.GetStatusBar().Status(view.StatusReceivingData)
 		file = os.Stdin
 	}
 	ctl.data = buffers.NewBufferedDataDefault()
 
+	_, _, _, height := ctl.view.GetDisplayRect()
+
 	scanner := bufio.NewScanner(file)
+	ctl.dataReady = false
+	go func() {
+		refreshPeriod := time.Duration(ctl.GetConfig().ViewRefreshSeconds) * time.Second
+		for !ctl.dataReady {
+			time.Sleep(refreshPeriod)
+			if !ctl.dataReady {
+				ctl.view.Refresh()
+			}
+		}
+	}()
+
 	for scanner.Scan() {
 		line := scanner.Text()
 		currentLength := lengthExpandedTabs(line, ctl.conf.SpacesPerTab)
@@ -180,11 +204,12 @@ func (ctl *Controller)readFile() {
 		if currentLength > ctl.maxLineLength {
 			ctl.maxLineLength = currentLength
 		}
-		if ctl.data.Len() < height {
+		if ctl.data.Len() <= height {
 			ctl.view.Refresh()
 		}
 	}
-	ctl.view.Refresh()
+	ctl.dataReady = true
+	ctl.view.GetStatusBar().Status(view.StatusReady)
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
 	}

@@ -18,7 +18,8 @@ const nummbersWidth = 8
 type StatusBar struct {
 	*tview.Box
 	view   *View
-    text   string
+	status view.AppStatus
+    text   *string
 }
 
 func newStatusBar(view *View) *StatusBar {
@@ -33,21 +34,36 @@ func newStatusBar(view *View) *StatusBar {
 }
 
 func (sb *StatusBar) Reset() {
-	sb.text = ""
+	sb.text = nil
 }
 
 func (sb *StatusBar) Message(format string, a ...interface{}) {
-	sb.text = fmt.Sprintf(format, a)
+	text := fmt.Sprintf(format, a...)
+	sb.text = &text
+	sb.view.Refresh()
+}
+
+func (sb *StatusBar) Status(status view.AppStatus) {
+	sb.status = status
+	sb.view.Refresh()
 }
 
 func (sb *StatusBar) Draw(screen tcell.Screen) {
 	var text string
 	sb.Box.Draw(screen)
-	conf := sb.view.ctl.GetConfig()
 	leftColumn, topRow, width, height := sb.view.GetDisplayRect()
 	x, y, width, _ := sb.GetInnerRect()
-	if len(sb.text) > 0 {
-		text = sb.text
+	conf := sb.view.ctl.GetConfig()
+	color := tcell.GetColor(conf.StatusBarTextColor)
+	statusLabel := sb.status.Display()
+	statusLabelWidth := tview.TaggedStringWidth(statusLabel)
+	if statusLabelWidth > 0 {
+		xLabel := width - (statusLabelWidth + 1)
+		tview.Print(screen, statusLabel, xLabel, y, statusLabelWidth, tview.AlignLeft, color)
+		width -= statusLabelWidth + 1
+	}
+	if sb.text != nil {
+		text = *sb.text
 	} else {
 		bottomRow := topRow + height
 		topRow++
@@ -55,7 +71,7 @@ func (sb *StatusBar) Draw(screen tcell.Screen) {
 		totalRows := sb.view.ctl.NoOfLines()
 		text = fmt.Sprintf("[::%s]%d:%d - %d / %d", conf.StatusBarTextAttrs, topRow, leftColumn, bottomRow, totalRows)
 	}
-	tview.Print(screen, text, x+1, y, width, tview.AlignLeft, tcell.GetColor(conf.StatusBarTextColor))
+	tview.Print(screen, text, x+1, y, width, tview.AlignLeft, color)
 
 }
 
@@ -91,32 +107,32 @@ func (view *View) GetRulerPosition() int {
 }
 
 func (view *View) SetRulerPosition(index int) {
-	view.text.rulerIndex = index
+	view.text.rulerPosition = index
 }
 
 type TextArea struct {
 	*tview.Box
-	view        *View
-	firstLine   int
-	firstColumn int
-	width       int
-	height      int
-	rulerIndex  int
-	showRuler   bool
-	showNumbers bool
+	view          *View
+	firstLine     int
+	firstColumn   int
+	width         int
+	height        int
+	rulerPosition int
+	showRuler     bool
+	showNumbers   bool
 }
 
 func newTextArea(view *View) *TextArea {
 	return &TextArea{
-		Box:         tview.NewBox(),
-		view:        view,
-		firstLine:   0,
-		firstColumn: 0,
-		width:       0,
-		height:      0,
-		rulerIndex: -1,
-		showRuler:   false,
-		showNumbers: false,
+		Box:           tview.NewBox(),
+		view:          view,
+		firstLine:     0,
+		firstColumn:   0,
+		width:         0,
+		height:        0,
+		rulerPosition: -1,
+		showRuler:     false,
+		showNumbers:   false,
 	}
 }
 
@@ -164,14 +180,19 @@ func (t *TextArea) drawRuler(screen tcell.Screen, x int, y int, textWidth int) {
 }
 
 func (t *TextArea) getRulerPosition() int {
-	if t.rulerIndex < 0 {
-		t.rulerIndex = t.height / 2
+	if t.rulerPosition < 0 {
+		t.rulerPosition = t.height / 2
 	}
-	max := utl.Min(t.height, t.view.ctl.NoOfLines())
-	if t.rulerIndex > max {
-		t.rulerIndex = max
+	lines := t.view.ctl.NoOfLines()
+	if t.view.ctl.DataReady() {
+		lines = utl.Min(t.height, lines)
+	} else {
+		lines = t.height
 	}
-	return t.rulerIndex
+	if t.rulerPosition > lines {
+		t.rulerPosition = lines
+	}
+	return t.rulerPosition
 }
 
 func (t *TextArea) Draw(screen tcell.Screen) {
@@ -247,7 +268,7 @@ func (t *TextArea) Draw(screen tcell.Screen) {
 			}
 			if t.showRuler && !rulerDrawn {
 				t.drawRuler(screen, xLeft+1, yTop + i, textWidth)
-				t.rulerIndex = i
+				t.rulerPosition = i
 			}
 		}
 	}

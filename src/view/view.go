@@ -54,17 +54,55 @@ func (action Action)String() string {
 }
 
 
+type AppStatus int
+const (
+	StatusUnknown AppStatus = iota
+	StatusReady
+	StatusReading
+	StatusReceivingData
+)
+
+func (status AppStatus)String() string {
+	names := []string{
+		"unknown",
+		"ready",
+		"reading",
+		"receiving",
+	}
+	a := int(status)
+	if a < 0 || a >= len(names) {
+		return names[0]
+	}
+	return names[a]
+}
+
+func (status AppStatus)Display() string {
+	names := []string{
+		"",
+		"READY",
+		"Reading...",
+		"Receiving...",
+	}
+	a := int(status)
+	if a < 0 || a >= len(names) {
+		return names[0]
+	}
+	return names[a]
+}
+
 type TheViewController interface {
 	DoAction(action Action)
 	NoOfLines() int
 	GetConfig() *config.Config
 	GetFileNameTitle() string
 	GetDataIterator(firstRow int) (*buffers.LineIndex, bool)
+	DataReady() bool
 }
 
 type TheStatusBar interface {
 	Reset()
 	Message(format string, a ...interface{})
+	Status(status AppStatus)
 }
 
 type TheView interface {
