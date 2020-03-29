@@ -130,6 +130,8 @@ func (ctl *Controller) DoAction(action view.Action) {
 			}
 			ctl.view.SetRulerPosition(ruler)
 		}
+	case view.ActionFlipNumbers:
+		ctl.view.ShowNumbers(!ctl.view.AreNumbersShown())
 	case view.ActionQuit:
 		ctl.view.StopApplication()
 		return

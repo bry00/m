@@ -11,6 +11,10 @@ import (
 	"strings"
 )
 
+
+const rulerHeight = 3
+const nummbersWidth = 8
+
 type StatusBar struct {
 	*tview.Box
 	view   *View
@@ -39,7 +43,7 @@ func (sb *StatusBar) Message(format string, a ...interface{}) {
 func (sb *StatusBar) Draw(screen tcell.Screen) {
 	var text string
 	sb.Box.Draw(screen)
-	ctl := sb.view.ctl.GetConfig()
+	conf := sb.view.ctl.GetConfig()
 	leftColumn, topRow, width, height := sb.view.GetDisplayRect()
 	x, y, width, _ := sb.GetInnerRect()
 	if len(sb.text) > 0 {
@@ -49,9 +53,9 @@ func (sb *StatusBar) Draw(screen tcell.Screen) {
 		topRow++
 		leftColumn++
 		totalRows := sb.view.ctl.NoOfLines()
-		text = fmt.Sprintf("[%s]%d:%d - %d / %d", ctl.StatusBarTextColor, topRow, leftColumn, bottomRow, totalRows)
+		text = fmt.Sprintf("[::%s]%d:%d - %d / %d", conf.StatusBarTextAttrs, topRow, leftColumn, bottomRow, totalRows)
 	}
-	tview.Print(screen, text, x+1, y, width, tview.AlignLeft, tcell.ColorWhite)
+	tview.Print(screen, text, x+1, y, width, tview.AlignLeft, tcell.GetColor(conf.StatusBarTextColor))
 
 }
 
@@ -61,6 +65,14 @@ type View struct {
 	ctl    view.TheViewController
 	text  *TextArea
 	statusBar *StatusBar
+}
+
+func (view *View) ShowNumbers(show bool) {
+	view.text.showNumbers = show
+}
+
+func (view *View) AreNumbersShown() bool {
+	return view.text.showNumbers
 }
 
 func (view *View) IsRulerShown() bool {
@@ -91,6 +103,7 @@ type TextArea struct {
 	height      int
 	rulerIndex  int
 	showRuler   bool
+	showNumbers bool
 }
 
 func newTextArea(view *View) *TextArea {
@@ -103,14 +116,13 @@ func newTextArea(view *View) *TextArea {
 		height:      0,
 		rulerIndex: -1,
 		showRuler:   false,
+		showNumbers: false,
 	}
 }
 
 func (view *View)GetStatusBar() view.TheStatusBar {
 	return view.statusBar
 }
-
-const rulerHeight = 3
 
 func (t *TextArea) drawRuler(screen tcell.Screen, x int, y int, textWidth int) {
 	var (
@@ -165,11 +177,12 @@ func (t *TextArea) getRulerPosition() int {
 func (t *TextArea) Draw(screen tcell.Screen) {
 	if t.view.ctl != nil {
 		conf := t.view.ctl.GetConfig()
+		numbersColor := tcell.GetColor(conf.NumbersColor)
 		arrowLeft  := fmt.Sprintf("[%s::%s]%c", conf.SideArrowsColor, conf.SideArrowsArttrs, conf.SideArrowLeft)
 		arrowRight := fmt.Sprintf("[%s::%s]%c", conf.SideArrowsColor, conf.SideArrowsArttrs, conf.SideArrowRight)
 		tabSpaces := strings.Repeat(" ", conf.SpacesPerTab)
 		t.Box.Draw(screen)
-		xLeft, yTop, width, height := t.GetInnerRect()
+		xBase, yTop, width, height := t.GetInnerRect()
 		showRuler := t.showRuler && height > rulerHeight
 		if showRuler {
 			height = height - rulerHeight
@@ -178,6 +191,19 @@ func (t *TextArea) Draw(screen tcell.Screen) {
 		rulerIndex := t.getRulerPosition()
 
 		textWidth := width - 2
+
+		var xLeft int
+		if t.showNumbers {
+			textWidth = textWidth - nummbersWidth
+			xLeft = xBase + nummbersWidth
+		} else {
+			xLeft = xBase
+		}
+
+		if textWidth < 0 {
+			textWidth = 0
+		}
+
 		t.width = textWidth
 
 		if iter, ok := t.view.ctl.GetDataIterator(t.firstLine); ok {
@@ -197,6 +223,11 @@ func (t *TextArea) Draw(screen tcell.Screen) {
 				if line, err := iter.GetLine(); err != nil {
 					log.Fatal(err)
 				} else {
+					if t.showNumbers {
+						tview.Print(screen, fmt.Sprintf("[::%s]%*d", conf.NumbersAttrs,
+							nummbersWidth, t.firstLine + i + 1),
+							xBase, y, nummbersWidth, tview.AlignLeft, numbersColor)
+					}
 					r := []rune(tview.Escape(strings.Replace(line, "\t", tabSpaces, -1)))
 					if t.firstColumn > len(r) {
 						line = ""
@@ -277,6 +308,8 @@ func (t *TextArea) InputHandler() func(event *tcell.EventKey, setFocus func(p tv
 						action = view.ActionMoveRulerUp
 					case '+':
 						action = view.ActionMoveRulerDown
+					case 'n':
+						action = view.ActionFlipNumbers
 					default:
 						return
 					}

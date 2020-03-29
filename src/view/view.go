@@ -23,6 +23,7 @@ const (
 	ActionFlipRuler
 	ActionMoveRulerUp
 	ActionMoveRulerDown
+	ActionFlipNumbers
 )
 
 func (action Action)String() string {
@@ -43,6 +44,7 @@ func (action Action)String() string {
 		"flipRuler",
 		"moveRulerUp",
 		"moveRulerDown",
+		"flipNumbers",
 	}
 	a := int(action)
 	if a < 0 || a >= len(names) {
@@ -77,4 +79,6 @@ type TheView interface {
 	IsRulerShown() bool
 	GetRulerPosition() int
 	SetRulerPosition(index int)
+	ShowNumbers(show bool)
+	AreNumbersShown() bool
 }

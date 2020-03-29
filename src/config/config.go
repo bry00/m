@@ -7,8 +7,11 @@ type Config struct {
 	SideArrowsColor     string
 	SideArrowsArttrs    string
 	StatusBarTextColor  string
+	StatusBarTextAttrs  string
 	RulerColor          string
 	RulerAttrs          string
+	NumbersColor        string
+	NumbersAttrs        string
 }
 
 func NewDefaultConfig() *Config {
@@ -26,7 +29,10 @@ func NewDefaultConfig() *Config {
 		SideArrowsArttrs:   "b",
 		RulerColor:         "gold",
 		RulerAttrs:         "rb",
-		StatusBarTextColor: "orange",
+		StatusBarTextColor: "gold",
+		StatusBarTextAttrs: "",
+		NumbersColor:       "gold",
+		NumbersAttrs:       "",
 	}
 
 }

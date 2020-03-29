@@ -16,7 +16,7 @@ for dir in _target _testing utl bin; do
   if [ -d "$dir" ]; then
     case ":${PATH}:" in
       *${THE_MODULE_ROOT}/${dir}*);;
-      *) export PATH="$PATH:${THE_MODULE_ROOT}/${dir}";;
+      *) export PATH="${THE_MODULE_ROOT}/${dir}:$PATH";;
     esac
   fi
 done
