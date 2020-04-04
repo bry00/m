@@ -24,6 +24,10 @@ const (
 	ActionMoveRulerUp
 	ActionMoveRulerDown
 	ActionFlipNumbers
+	ActionSearch
+	ActionFindNext
+	ActionGotoLine
+	ActionReset
 )
 
 func (action Action)String() string {
@@ -45,6 +49,10 @@ func (action Action)String() string {
 		"moveRulerUp",
 		"moveRulerDown",
 		"flipNumbers",
+		"search",
+		"findNext",
+		"gotoLine",
+		"reset",
 	}
 	a := int(action)
 	if a < 0 || a >= len(names) {
@@ -97,12 +105,16 @@ type TheViewController interface {
 	GetFileNameTitle() string
 	GetDataIterator(firstRow int) (*buffers.LineIndex, bool)
 	DataReady() bool
+	SetSearchText(text string, regex bool, ignoreCase bool)
+	SetPointedLine(lineNo int)
 }
 
 type TheStatusBar interface {
 	Reset()
 	Message(format string, a ...interface{})
 	Status(status AppStatus)
+	SafeMessage(format string, a ...interface{})
+	SafeStatus(status AppStatus)
 }
 
 type TheView interface {
@@ -119,4 +131,8 @@ type TheView interface {
 	SetRulerPosition(index int)
 	ShowNumbers(show bool)
 	AreNumbersShown() bool
+	ShowSearchDialog()
+	ShowGotoLineDialog()
+	ShowLine(lineIndex int)
+	ShowSearchResult(lineIndex int, start int, end int)
 }

@@ -8,19 +8,26 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 	"unicode/utf8"
 )
 
 type Controller struct {
-	fileName      *string
-	title         *string
-	conf          *config.Config
-	maxLineLength  int
-	view           view.TheView
-	data          *buffers.BufferedData
-	dataReady      bool
+	fileName          *string
+	title             *string
+	conf              *config.Config
+	maxLineLength      int
+	view               view.TheView
+	data              *buffers.BufferedData
+	dataReady          bool
+	searchString       string
+	searchRegex        bool
+	searchIgnoreCase   bool
+	searchLastRow      int
+	searchLastCol      int
+	pointedLine        int
 }
 
 
@@ -39,13 +46,19 @@ func NewController(fileName string, data *buffers.BufferedData, view view.TheVie
 		}
 	}
 	result := &Controller {
-		fileName:      filePath,
-		title:         nil,
-		conf:          conf,
-		maxLineLength: 0,
-		data:          data,
-		view:          view,
-		dataReady:     false,
+		fileName:       filePath,
+		title:          nil,
+		conf:           conf,
+		maxLineLength:  0,
+		data:           data,
+		view:           view,
+		dataReady:      false,
+		searchString:     "",
+		searchRegex:      false,
+		searchIgnoreCase: false,
+		searchLastRow:   -1,
+		searchLastCol:   -1,
+		pointedLine:   -1,
 	}
 	view.SetController(result)
 	return result
@@ -98,10 +111,42 @@ func (ctl *Controller) GetDataIterator(firstRow int) (*buffers.LineIndex, bool) 
 	}
 }
 
+func setFoundStringPosition(left int, top int, width int, height int, foundLine int, foundStart int, foundEnd int) (int, int) {
+	if foundLine >= 0 && foundStart >= 0 && foundEnd >= 0 {
+
+		if foundLine < top || foundLine >= top + height {
+			top = foundLine - height / 3
+		}
+
+		if foundEnd >= left + width {
+			left = foundEnd - width
+		}
+		if foundStart < left {
+			left = foundStart
+		}
+
+		if left < 0 {
+			left = 0
+		}
+		if top < 0 {
+			top = 0
+		}
+	}
+	return left, top
+}
+
+
 func (ctl *Controller) DoAction(action view.Action) {
 	lines := ctl.data.Len()
 	left, top, width, height := ctl.view.GetDisplayRect()
+
 	switch action {
+	case view.ActionReset:
+		ctl.pointedLine = -1
+		ctl.view.ShowLine(ctl.pointedLine)
+		ctl.view.ShowRuler(false)
+		ctl.view.ShowNumbers(false)
+		ctl.view.ShowSearchResult(-1, -1, -1)
 	case view.ActionScrollUp:
 		top -= 1
 	case view.ActionScrollDown:
@@ -142,6 +187,56 @@ func (ctl *Controller) DoAction(action view.Action) {
 		}
 	case view.ActionFlipNumbers:
 		ctl.view.ShowNumbers(!ctl.view.AreNumbersShown())
+	case view.ActionSearch:
+		ctl.searchLastRow = -1
+		ctl.searchLastCol = -1
+		ctl.view.ShowSearchResult(-1, -1, -1)
+		ctl.view.ShowSearchDialog()
+	case view.ActionFindNext:
+		//var sType string
+		//if ctl.searchRegex {
+		//	sType = "REGEX"
+		//} else {
+		//	sType = "plain search"
+		//}
+		//ctl.view.GetStatusBar().Message("Find: \"%s\" as %s",ctl.searchString, sType)
+
+		if ctl.searchLastRow < 0 {
+			ctl.searchLastRow = top
+		}
+		if ctl.searchLastCol < 0 {
+			ctl.searchLastCol = left
+		}
+		foundLine, foundStart, foundEnd, err := ctl.findNext(ctl.searchLastRow, ctl.searchLastCol)
+		if err == nil {
+			ctl.searchLastRow = foundLine
+			ctl.searchLastCol = foundEnd
+			ctl.view.ShowSearchResult(foundLine,foundStart, foundEnd)
+			if ctl.searchLastRow >= 0 {
+				left, top = setFoundStringPosition(left, top, width, height, foundLine, foundStart, foundEnd)
+				ctl.view.GetStatusBar().Message("Found at: %d:%d \"%s\"",
+					foundLine + 1, foundStart + 1, ctl.searchString)
+			} else {
+				ctl.view.GetStatusBar().Message("Cannot find: \"%s\"", ctl.searchString)
+			}
+		} else {
+			ctl.view.GetStatusBar().Message("Wrong search string \"%s\": %s", ctl.searchString, err.Error())
+		}
+	case view.ActionGotoLine:
+		if ctl.pointedLine > 0 {
+			if ctl.pointedLine > lines {
+				ctl.view.GetStatusBar().Message("Wrong line number: %d", ctl.pointedLine)
+			} else {
+				lineIndex := ctl.pointedLine - 1
+				top = lineIndex - height / 3
+				ctl.view.ShowLine(lineIndex)
+				ctl.view.GetStatusBar().Message("Line #%d", ctl.pointedLine)
+			}
+			ctl.pointedLine = -1
+
+		} else {
+			ctl.view.ShowGotoLineDialog()
+		}
 	case view.ActionQuit:
 		ctl.view.StopApplication()
 		return
@@ -155,12 +250,92 @@ func (ctl *Controller) DoAction(action view.Action) {
 		top = 0
 	}
 	if left > ctl.maxLineLength - width + 1 {
-		left = ctl.maxLineLength - width + 1
+			left = ctl.maxLineLength - width + 1
 	}
 	if left < 0 {
 		left = 0
 	}
 	ctl.view.DisplayAt(left, top)
+}
+
+func (ctl *Controller) SetSearchText(text string, regex bool, ignoreCase bool) {
+	ctl.searchString = text
+	ctl.searchRegex = regex
+	ctl.searchIgnoreCase = ignoreCase
+}
+
+func (ctl *Controller) findNext(startLine int, startColumn int) (int, int, int, error) {
+	var (
+		err          error
+		re           *regexp.Regexp
+	)
+	tabSpaces := strings.Repeat(" ", ctl.conf.SpacesPerTab)
+	searchString := ctl.searchString
+
+	if ctl.searchRegex {
+		if ctl.searchIgnoreCase && !strings.HasPrefix(ctl.searchString, "(?i)") {
+			searchString = "(?i)" + searchString
+		}
+		re, err = regexp.Compile(searchString)
+		if err != nil {
+			return -1, -1, -1, err
+		}
+	} else {
+		if ctl.searchIgnoreCase {
+			searchString = strings.ToUpper(searchString)
+		}
+	}
+	search := func(txt string) ([]int) {
+		if ctl.searchRegex {
+			return re.FindStringIndex(txt)
+		}
+		if ctl.searchIgnoreCase {
+			txt = strings.ToUpper(txt)
+		}
+		i := strings.Index(txt, searchString)
+		if i<0 {
+			return nil
+		}
+		result := make([]int, 2)
+		result[0] = i
+		result[1] = i + len(searchString)
+		return result
+	}
+	line := -1
+	start := -1
+	end := -1
+	offset := startColumn
+	i := ctl.data.NewLineIndexer()
+	i.IndexSet(startLine, false)
+	for ; i.IndexOK() ; i.IndexIncrement()  {
+		if txt, err := i.GetLine(); err == nil {
+			txt = strings.Replace(txt, "\t", tabSpaces, -1)
+			if offset < len(txt) {
+				if offset > 0 {
+					txt = txt[offset:]
+				}
+				if found := search(txt); found != nil {
+					line = i.Index()
+					start = found[0] + offset
+					end = found[1] + offset
+					break
+				}
+				//if found := re.FindStringIndex(txt); found != nil {
+				//	line = i.Index()
+				//	start = found[0] + offset
+				//	end = found[1] + offset
+				//	break
+				//}
+			}
+		}
+		offset = 0
+	}
+	return line, start, end, nil
+}
+
+
+func (ctl *Controller) SetPointedLine(lineNo int) {
+	ctl.pointedLine = lineNo
 }
 
 
@@ -171,14 +346,14 @@ func (ctl *Controller)readFile() {
 	)
 
 	if ctl.fileName != nil {
-		ctl.view.GetStatusBar().Status(view.StatusReading)
+		ctl.view.GetStatusBar().SafeStatus(view.StatusReading)
 		if file, err = os.Open(*ctl.fileName); err != nil {
 			log.Fatal(err)
 		} else {
 			defer file.Close()
 		}
 	} else {
-		ctl.view.GetStatusBar().Status(view.StatusReceivingData)
+		ctl.view.GetStatusBar().SafeStatus(view.StatusReceivingData)
 		file = os.Stdin
 	}
 	ctl.data = buffers.NewBufferedDataDefault()
@@ -209,7 +384,8 @@ func (ctl *Controller)readFile() {
 		}
 	}
 	ctl.dataReady = true
-	ctl.view.GetStatusBar().Status(view.StatusReady)
+	ctl.view.GetStatusBar().SafeStatus(view.StatusReady)
+	ctl.view.Refresh()
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
 	}

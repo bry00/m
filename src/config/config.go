@@ -11,7 +11,6 @@ type Config struct {
 	RulerColor          string
 	RulerAttrs          string
 	NumbersColor        string
-	NumbersAttrs        string
 	ViewRefreshSeconds  int
 }
 
@@ -34,7 +33,6 @@ func NewDefaultConfig() *Config {
 		StatusBarTextColor: "gold",
 		StatusBarTextAttrs: "",
 		NumbersColor:       "gold",
-		NumbersAttrs:       "",
 	}
 
 }
