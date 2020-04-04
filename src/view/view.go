@@ -26,6 +26,7 @@ const (
 	ActionFlipNumbers
 	ActionSearch
 	ActionFindNext
+	ActionFindPrevious
 	ActionGotoLine
 	ActionReset
 )
@@ -51,6 +52,7 @@ func (action Action)String() string {
 		"flipNumbers",
 		"search",
 		"findNext",
+		"findPrevious",
 		"gotoLine",
 		"reset",
 	}

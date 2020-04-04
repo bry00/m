@@ -193,14 +193,6 @@ func (ctl *Controller) DoAction(action view.Action) {
 		ctl.view.ShowSearchResult(-1, -1, -1)
 		ctl.view.ShowSearchDialog()
 	case view.ActionFindNext:
-		//var sType string
-		//if ctl.searchRegex {
-		//	sType = "REGEX"
-		//} else {
-		//	sType = "plain search"
-		//}
-		//ctl.view.GetStatusBar().Message("Find: \"%s\" as %s",ctl.searchString, sType)
-
 		if ctl.searchLastRow < 0 {
 			ctl.searchLastRow = top
 		}
@@ -218,6 +210,32 @@ func (ctl *Controller) DoAction(action view.Action) {
 					foundLine + 1, foundStart + 1, ctl.searchString)
 			} else {
 				ctl.view.GetStatusBar().Message("Cannot find: \"%s\"", ctl.searchString)
+				ctl.searchLastRow = 0
+				ctl.searchLastCol = 0
+			}
+		} else {
+			ctl.view.GetStatusBar().Message("Wrong search string \"%s\": %s", ctl.searchString, err.Error())
+		}
+	case view.ActionFindPrevious:
+		if ctl.searchLastRow < 0 {
+			ctl.searchLastRow = ctl.NoOfLines()
+			ctl.searchLastCol = -1
+		} else {
+			ctl.searchLastCol--
+		}
+		foundLine, foundStart, foundEnd, err := ctl.findPrevious(ctl.searchLastRow, ctl.searchLastCol)
+		if err == nil {
+			ctl.searchLastRow = foundLine
+			ctl.searchLastCol = foundEnd
+			ctl.view.ShowSearchResult(foundLine,foundStart, foundEnd)
+			if ctl.searchLastRow >= 0 {
+				left, top = setFoundStringPosition(left, top, width, height, foundLine, foundStart, foundEnd)
+				ctl.view.GetStatusBar().Message("Previous at: %d:%d \"%s\"",
+					foundLine + 1, foundStart + 1, ctl.searchString)
+			} else {
+				ctl.view.GetStatusBar().Message("Cannot find previous: \"%s\"", ctl.searchString)
+				ctl.searchLastRow = ctl.NoOfLines() - 1
+				ctl.searchLastCol = -1
 			}
 		} else {
 			ctl.view.GetStatusBar().Message("Wrong search string \"%s\": %s", ctl.searchString, err.Error())
@@ -262,6 +280,70 @@ func (ctl *Controller) SetSearchText(text string, regex bool, ignoreCase bool) {
 	ctl.searchString = text
 	ctl.searchRegex = regex
 	ctl.searchIgnoreCase = ignoreCase
+}
+
+func (ctl *Controller) findPrevious(startLine int, startColumn int) (int, int, int, error) {
+	var (
+		err          error
+		re           *regexp.Regexp
+	)
+	tabSpaces := strings.Repeat(" ", ctl.conf.SpacesPerTab)
+	searchString := ctl.searchString
+
+	if ctl.searchRegex {
+		if ctl.searchIgnoreCase && !strings.HasPrefix(ctl.searchString, "(?i)") {
+			searchString = "(?i)" + searchString
+		}
+		re, err = regexp.Compile(searchString)
+		if err != nil {
+			return -1, -1, -1, err
+		}
+	} else {
+		if ctl.searchIgnoreCase {
+			searchString = strings.ToUpper(searchString)
+		}
+	}
+	search := func(txt string) ([]int) {
+		if ctl.searchRegex {
+			if f := re.FindAllStringIndex(txt, -1); f != nil {
+                return f[len(f)-1]
+			}
+			return nil;
+		}
+		if ctl.searchIgnoreCase {
+			txt = strings.ToUpper(txt)
+		}
+		i := strings.LastIndex(txt, searchString)
+		if i<0 {
+			return nil
+		}
+		result := make([]int, 2)
+		result[0] = i
+		result[1] = i + len(searchString)
+		return result
+	}
+	line := -1
+	start := -1
+	end := -1
+	limit := startColumn
+	i := ctl.data.NewLineIndexer()
+	i.IndexSet(startLine, false)
+	for ; i.IndexOK() ; i.IndexDecrement()  {
+		if txt, err := i.GetLine(); err == nil {
+			txt = strings.Replace(txt, "\t", tabSpaces, -1)
+			if limit > 0 {
+				txt = txt[0:limit]
+				limit = 0
+			}
+			if found := search(txt); found != nil {
+				line = i.Index()
+				start = found[0]
+				end = found[1]
+				break
+			}
+		}
+	}
+	return line, start, end, nil
 }
 
 func (ctl *Controller) findNext(startLine int, startColumn int) (int, int, int, error) {
@@ -320,12 +402,6 @@ func (ctl *Controller) findNext(startLine int, startColumn int) (int, int, int, 
 					end = found[1] + offset
 					break
 				}
-				//if found := re.FindStringIndex(txt); found != nil {
-				//	line = i.Index()
-				//	start = found[0] + offset
-				//	end = found[1] + offset
-				//	break
-				//}
 			}
 		}
 		offset = 0

@@ -292,6 +292,8 @@ func (t *TextArea) InputHandler() func(event *tcell.EventKey, setFocus func(p tv
 				action = view.ActionQuit
 			case 'n':
 				action = view.ActionFindNext
+			case 'N':
+				action = view.ActionFindPrevious
 			case '-':
 				action = view.ActionMoveRulerUp
 			case '+':
