@@ -34,26 +34,26 @@ const (
 func (action Action)String() string {
 	names := []string{
 		"unknown",
-		"showHelp",
+		"show help",
 		"quit",
-		"scrollUp",
-		"scrollDown",
-		"scrollLeft",
-		"scrollRight",
-		"pageUp",
-		"pageDown",
+		"scroll up",
+		"scroll down",
+		"scroll left",
+		"scroll right",
+		"page up",
+		"page down",
 		"top",
 		"bottom",
 		"home",
 		"end",
-		"flipRuler",
-		"moveRulerUp",
-		"moveRulerDown",
-		"flipNumbers",
+		"flip ruler",
+		"move ruler up",
+		"move ruler down",
+		"flip numbers",
 		"search",
-		"findNext",
-		"findPrevious",
-		"gotoLine",
+		"find next",
+		"find previous",
+		"go to line",
 		"reset",
 	}
 	a := int(action)
@@ -120,7 +120,8 @@ type TheStatusBar interface {
 }
 
 type TheView interface {
-	Show();
+	Prepare()
+	Show()
 	StopApplication();
 	DisplayAt(left int, top int);
 	GetDisplayRect() (int, int, int, int)
@@ -137,4 +138,5 @@ type TheView interface {
 	ShowGotoLineDialog()
 	ShowLine(lineIndex int)
 	ShowSearchResult(lineIndex int, start int, end int)
+	GetKeyShortcuts() map[Action][]string
 }

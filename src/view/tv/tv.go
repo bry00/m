@@ -3,7 +3,7 @@ package tv
 import (
 
 	//	"fmt"
-//	"github.com/bry00/m/utl"
+	//	"github.com/bry00/m/utl"
 	"github.com/bry00/m/view"
 	"github.com/gdamore/tcell"
 	"github.com/rivo/tview"
@@ -31,6 +31,7 @@ type View struct {
 	searchDialog *SearchDialog
 	lineDialog   *LineDialog
 }
+
 
 func (view *View) ShowSearchResult(lineIndex int, start int, end int) {
 	view.text.foundLine = lineIndex
@@ -133,7 +134,7 @@ func (view *View) ShowGotoLineDialog() {
 }
 
 
-func (v *View) Show() {
+func (v *View) Prepare() {
 	v.text.SetBorder(true).
 		SetBorderAttributes(tcell.AttrBold).
 		SetTitle(" " + v.ctl.GetFileNameTitle() + " ")
@@ -151,19 +152,28 @@ func (v *View) Show() {
 	screenWidth, _ := screen.Size()
 
 	pgMain := tview.NewFlex().SetDirection(tview.FlexRow).
-			AddItem(v.text, 0, 1, true).
-			AddItem(v.statusBar, 1, 1, false)
+		AddItem(v.text, 0, 1, true).
+		AddItem(v.statusBar, 1, 1, false)
 
 	v.pages.AddPage(pageMain, pgMain, true, true).
 		AddPage(pageSearch, v.newModal(newSearchDialog(v, screenWidth)), true, false).
 		AddPage(pageGoToLine, v.newModal(newLineDialog(v)), true, false)
 
 	//v.app.EnableMouse(true)
+}
 
+
+func (v *View) Show() {
 	if err := v.app.SetRoot(v.pages, true).Run(); err != nil {
 		log.Fatal(err.Error())
 	}
 }
 
+func (view *View) GetKeyShortcuts() map[view.Action][]string {
+	return generateActionShortcutNames(textAreaShortcuts)
+}
 
+//func (v *View)  GetShortcuts() map[view.Action][]string {
+//
+//}
 

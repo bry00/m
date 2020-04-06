@@ -230,93 +230,150 @@ func (t *TextArea) Draw(screen tcell.Screen) {
 	}
 }
 
+
+//func (t *TextArea) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+//	return t.WrapInputHandler(func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
+//		//if t.view.ctl != nil {
+//		action := view.ActionUnknown
+//		t.view.statusBar.Reset()
+//		switch event.Key() {
+//		case tcell.KeyUp:
+//			action = view.ActionScrollUp
+//		case tcell.KeyEnter:
+//			fallthrough
+//		case tcell.KeyDown:
+//			action = view.ActionScrollDown
+//		case tcell.KeyPgDn:
+//			if event.Modifiers()&tcell.ModCtrl != 0 {
+//				action = view.ActionBottom
+//			} else {
+//				action = view.ActionPageDown
+//			}
+//		case tcell.KeyCtrlF:
+//			action = view.ActionPageDown
+//		case tcell.KeyCtrlSpace:
+//			action = view.ActionPageUp
+//		case tcell.KeyPgUp:
+//			if event.Modifiers()&tcell.ModCtrl != 0 {
+//				action = view.ActionTop
+//			} else {
+//				action = view.ActionPageUp
+//			}
+//		case tcell.KeyCtrlB:
+//			action = view.ActionPageUp
+//		case tcell.KeyCtrlN:
+//			action = view.ActionFlipNumbers
+//		case tcell.KeyCtrlL:
+//			fallthrough
+//		case tcell.KeyCtrlG:
+//			action = view.ActionGotoLine
+//		case tcell.KeyHome:
+//			if event.Modifiers()&tcell.ModCtrl != 0 {
+//				action = view.ActionTop
+//			} else {
+//				action = view.ActionHome
+//			}
+//		case tcell.KeyEnd:
+//			if event.Modifiers()&tcell.ModCtrl != 0 {
+//				action = view.ActionBottom
+//			} else {
+//				action = view.ActionEnd
+//			}
+//		case tcell.KeyLeft:
+//			action = view.ActionScrollRight
+//		case tcell.KeyRight:
+//			action = view.ActionScrollLeft
+//		case tcell.KeyRune:
+//			switch event.Rune() {
+//			case '/':
+//				action = view.ActionSearch
+//			case ' ':
+//				action = view.ActionPageDown
+//			case 'q':
+//				action = view.ActionQuit
+//			case 'n':
+//				action = view.ActionFindNext
+//			case 'N':
+//				action = view.ActionFindPrevious
+//			case '-':
+//				action = view.ActionMoveRulerUp
+//			case '+':
+//				action = view.ActionMoveRulerDown
+//			case 'r':
+//				action = view.ActionFlipRuler
+//			case ':':
+//				action = view.ActionGotoLine
+//			case '\\':
+//				action = view.ActionReset
+//			case 'g':
+//				action = view.ActionTop
+//			case 'G':
+//				action = view.ActionBottom
+//			default:
+//				return
+//			}
+//		case tcell.KeyEscape:
+//			action = view.ActionQuit
+//		default:
+//			return
+//		}
+//		t.view.ctl.DoAction(action)
+//		//}
+//	})
+//}
+
 func (t *TextArea) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	return t.WrapInputHandler(func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
-		//if t.view.ctl != nil {
-		action := view.ActionUnknown
 		t.view.statusBar.Reset()
-		switch event.Key() {
-		case tcell.KeyUp:
-			action = view.ActionScrollUp
-		case tcell.KeyEnter:
-			fallthrough
-		case tcell.KeyDown:
-			action = view.ActionScrollDown
-		case tcell.KeyPgDn:
-			if event.Modifiers()&tcell.ModCtrl != 0 {
-				action = view.ActionBottom
-			} else {
-				action = view.ActionPageDown
-			}
-		case tcell.KeyCtrlF:
-			action = view.ActionPageDown
-		case tcell.KeyCtrlSpace:
-			action = view.ActionPageUp
-		case tcell.KeyPgUp:
-			if event.Modifiers()&tcell.ModCtrl != 0 {
-				action = view.ActionTop
-			} else {
-				action = view.ActionPageUp
-			}
-		case tcell.KeyCtrlB:
-			action = view.ActionPageUp
-		case tcell.KeyCtrlN:
-			action = view.ActionFlipNumbers
-		case tcell.KeyCtrlL:
-			fallthrough
-		case tcell.KeyCtrlG:
-			action = view.ActionGotoLine
-		case tcell.KeyHome:
-			if event.Modifiers()&tcell.ModCtrl != 0 {
-				action = view.ActionTop
-			} else {
-				action = view.ActionHome
-			}
-		case tcell.KeyEnd:
-			if event.Modifiers()&tcell.ModCtrl != 0 {
-				action = view.ActionBottom
-			} else {
-				action = view.ActionEnd
-			}
-		case tcell.KeyLeft:
-			action = view.ActionScrollRight
-		case tcell.KeyRight:
-			action = view.ActionScrollLeft
-		case tcell.KeyRune:
-			switch event.Rune() {
-			case '/':
-				action = view.ActionSearch
-			case ' ':
-				action = view.ActionPageDown
-			case 'q':
-				action = view.ActionQuit
-			case 'n':
-				action = view.ActionFindNext
-			case 'N':
-				action = view.ActionFindPrevious
-			case '-':
-				action = view.ActionMoveRulerUp
-			case '+':
-				action = view.ActionMoveRulerDown
-			case 'r':
-				action = view.ActionFlipRuler
-			case ':':
-				action = view.ActionGotoLine
-			case '\\':
-				action = view.ActionReset
-			case 'g':
-				action = view.ActionTop
-			case 'G':
-				action = view.ActionBottom
-			default:
-				return
-			}
-		case tcell.KeyEscape:
-			action = view.ActionQuit
-		default:
-			return
+		action := textAreaShortcutMap.mapKeys(event)
+		if action != view.ActionUnknown {
+			t.view.ctl.DoAction(action)
 		}
-		t.view.ctl.DoAction(action)
-		//}
 	})
+}
+
+var (
+	textAreaShortcuts = []shortcut {
+		{key: tcell.KeyUp, action: view.ActionScrollUp},
+		{key: tcell.KeyDown, action: view.ActionScrollDown},
+		{key: tcell.KeyEnter, action: view.ActionScrollDown},
+		{key: tcell.KeyPgDn, action: view.ActionPageDown},
+		{key: tcell.KeyCtrlF, action: view.ActionPageDown},
+		{key: tcell.KeyPgDn, mod: tcell.ModCtrl, action: view.ActionBottom},
+		{key: tcell.KeyCtrlSpace, action: view.ActionPageUp},
+		{key: tcell.KeyPgUp, action: view.ActionPageUp},
+		{key: tcell.KeyPgUp, mod: tcell.ModCtrl, action: view.ActionTop},
+		{key: tcell.KeyCtrlB, action: view.ActionPageUp},
+		{key: tcell.KeyCtrlN, action: view.ActionFlipNumbers},
+		{key: tcell.KeyCtrlL, action: view.ActionGotoLine},
+		{key: tcell.KeyCtrlG, action: view.ActionGotoLine},
+		{key: tcell.KeyHome, action: view.ActionHome},
+		{key: tcell.KeyHome, mod: tcell.ModCtrl, action: view.ActionTop},
+		{key: tcell.KeyEnd, action: view.ActionEnd},
+		{key: tcell.KeyEnd, mod: tcell.ModCtrl, action: view.ActionBottom},
+		{key: tcell.KeyLeft, action: view.ActionScrollRight},
+		{key: tcell.KeyRight, action: view.ActionScrollLeft},
+
+		{r: ' ', action: view.ActionPageDown},
+		{r: '/', action: view.ActionSearch},
+
+		{r: 'n', action: view.ActionFindNext},
+		{r: 'N', action: view.ActionFindPrevious},
+		{r: 'r', action: view.ActionFlipRuler},
+		{r: '-', action: view.ActionMoveRulerUp},
+		{r: '+', action: view.ActionMoveRulerDown},
+		{r: ':', action: view.ActionGotoLine},
+		{r: '\\', action: view.ActionReset},
+		{r: 'g', action: view.ActionTop},
+		{r: 'G', action: view.ActionBottom},
+
+
+		{r: 'q', action: view.ActionQuit},
+		{key: tcell.KeyEscape, action: view.ActionQuit},
+	}
+	textAreaShortcutMap *shortcutMap
+)
+
+func init() {
+	textAreaShortcutMap = newShortcutMap(textAreaShortcuts)
 }

@@ -73,6 +73,7 @@ func (ctl *Controller) GetConfig() *config.Config {
 }
 
 func (ctl *Controller) Run() {
+	ctl.view.Prepare()
 	go ctl.readFile()
 	ctl.view.Show()
 }

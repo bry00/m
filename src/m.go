@@ -14,6 +14,7 @@ import (
 
 
 
+
 func main() {
 	setupLogger()
 	flag.Parse()
@@ -29,6 +30,21 @@ func main() {
 	ctl := controller.NewController(fileName, buffers.NewBufferedDataDefault(), tv.NewView(), conf)
 	defer ctl.OnExit()
 	ctl.Run()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	//fileName := flag.Arg(0)
 	//file, err := os.Open(fileName)
