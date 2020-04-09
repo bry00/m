@@ -21,18 +21,18 @@ const nummbersWidth = 8
 const pageMain   = "main"
 const pageSearch = "search"
 const pageGoToLine = "goto-line"
+const pageShortcuts = "shortcuts"
 
 type View struct {
-	app          *tview.Application
-	ctl           view.TheViewController
-	pages        *tview.Pages
-	text         *TextArea
-	statusBar    *StatusBar
-	searchDialog *SearchDialog
-	lineDialog   *LineDialog
+	app            *tview.Application
+	ctl             view.TheViewController
+	pages          *tview.Pages
+	text           *TextArea
+	statusBar      *StatusBar
+	searchDialog   *SearchDialog
+	lineDialog     *LineDialog
+	shortcutWindow *ShortcutsWindow
 }
-
-
 func (view *View) ShowSearchResult(lineIndex int, start int, end int) {
 	view.text.foundLine = lineIndex
 	view.text.foundStart = start
@@ -136,7 +136,7 @@ func (view *View) ShowGotoLineDialog() {
 
 func (v *View) Prepare() {
 	v.text.SetBorder(true).
-		SetBorderAttributes(tcell.AttrBold).
+		//SetBorderAttributes(tcell.AttrBold).
 		SetTitle(" " + v.ctl.GetFileNameTitle() + " ")
 	v.statusBar = newStatusBar(v)
 
@@ -149,7 +149,7 @@ func (v *View) Prepare() {
 		log.Fatal(err.Error())
 	}
 	v.app.SetScreen(screen)
-	screenWidth, _ := screen.Size()
+	screenWidth, screenHeight := screen.Size()
 
 	pgMain := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(v.text, 0, 1, true).
@@ -157,8 +157,10 @@ func (v *View) Prepare() {
 
 	v.pages.AddPage(pageMain, pgMain, true, true).
 		AddPage(pageSearch, v.newModal(newSearchDialog(v, screenWidth)), true, false).
-		AddPage(pageGoToLine, v.newModal(newLineDialog(v)), true, false)
+		AddPage(pageGoToLine, v.newModal(newLineDialog(v)), true, false).
+		AddPage(pageShortcuts, v.newModal(newShortcutsWindow(v.GetKeyShortcuts(), v, screenWidth, screenHeight)), true, false)
 
+	// TODO:
 	//v.app.EnableMouse(true)
 }
 
@@ -173,7 +175,6 @@ func (view *View) GetKeyShortcuts() map[view.Action][]string {
 	return generateActionShortcutNames(textAreaShortcuts)
 }
 
-//func (v *View)  GetShortcuts() map[view.Action][]string {
-//
-//}
-
+func (view *View) ShowShortcuts() {
+	view.pages.ShowPage(pageShortcuts)
+}

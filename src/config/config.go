@@ -1,5 +1,7 @@
 package config
 
+import "strings"
+
 type Config struct {
 	SpacesPerTab        int
 	SideArrowLeft       rune
@@ -11,6 +13,9 @@ type Config struct {
 	RulerColor          string
 	RulerAttrs          string
 	NumbersColor        string
+	HelpBackgroundColor string
+	HelpForegroundColor string
+	HelpBorderColor     string
 	ViewRefreshSeconds  int
 }
 
@@ -26,14 +31,20 @@ func NewDefaultConfig() *Config {
 		//SideArrowRight:     '\u2B46',
 		//SideArrowLeft:      '\u276E',
 		//SideArrowRight:     '\u276F',
-		SideArrowsColor:    "orange",
+		SideArrowsColor:    n("orange"),
 		SideArrowsArttrs:   "b",
-		RulerColor:         "gold",
+		RulerColor:         n("gold"),
 		RulerAttrs:         "rb",
-		StatusBarTextColor: "gold",
+		StatusBarTextColor: n("gold"),
 		StatusBarTextAttrs: "",
-		NumbersColor:       "gold",
+		NumbersColor:       n("gold"),
+		HelpBackgroundColor: n("AliceBlue"),
+		HelpForegroundColor: n("MidnightBlue"),
+		HelpBorderColor:     n("MidnightBlue"),
 	}
 
 }
 
+func n(s string) string {
+	return strings.ToLower(strings.TrimSpace(s))
+}

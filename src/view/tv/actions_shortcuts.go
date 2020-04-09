@@ -138,7 +138,6 @@ func (sm *shortcutMap) mapKeys(ev *tcell.EventKey) view.Action {
 			}
 		}
 	} else {
-		//mod &^= tcell.ModCtrl // CtrlKeys have already unique value
 		if m, exists := sm.keyMap[key]; exists {
 			if v, exists := m[mod]; exists {
 				result = v
@@ -150,17 +149,3 @@ func (sm *shortcutMap) mapKeys(ev *tcell.EventKey) view.Action {
 
 
 
-
-
-
-
-
-//func Try() {
-//	//s := newShortcutMap(shortcuts)
-//	fmt.Println("OK")
-//	a  := generateActionShortcutNames(shortcuts)
-//	for k, v := range a {
-//		fmt.Println(k, strings.Join(v, ", "))
-//	}
-//
-//}

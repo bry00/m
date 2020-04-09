@@ -8,59 +8,64 @@ import (
 type Action int
 const (
 	ActionUnknown Action = iota
-	ActionShowHelp
 	ActionQuit
 	ActionScrollUp
 	ActionScrollDown
-	ActionScrollLeft
-	ActionScrollRight
 	ActionPageUp
 	ActionPageDown
 	ActionTop
 	ActionBottom
+	ActionScrollLeft
+	ActionScrollRight
 	ActionHome
 	ActionEnd
-	ActionFlipRuler
-	ActionMoveRulerUp
-	ActionMoveRulerDown
-	ActionFlipNumbers
 	ActionSearch
 	ActionFindNext
 	ActionFindPrevious
 	ActionGotoLine
+	ActionFlipNumbers
+	ActionFlipRuler
+	ActionMoveRulerUp
+	ActionMoveRulerDown
 	ActionReset
+	ActionShortcuts
 )
 
+var actionNames = []string{
+"unknown",
+"quit",
+"scroll up",
+"scroll down",
+"page up",
+"page down",
+"top",
+"bottom",
+"scroll left",
+"scroll right",
+"home",
+"end",
+"search",
+"find next",
+"find previous",
+"go to line",
+"flip numbers",
+"flip ruler",
+"move ruler up",
+"move ruler down",
+"reset",
+"show shortcuts",
+}
+
+func (action Action)Count() int {
+	return len(actionNames)
+}
+
 func (action Action)String() string {
-	names := []string{
-		"unknown",
-		"show help",
-		"quit",
-		"scroll up",
-		"scroll down",
-		"scroll left",
-		"scroll right",
-		"page up",
-		"page down",
-		"top",
-		"bottom",
-		"home",
-		"end",
-		"flip ruler",
-		"move ruler up",
-		"move ruler down",
-		"flip numbers",
-		"search",
-		"find next",
-		"find previous",
-		"go to line",
-		"reset",
-	}
 	a := int(action)
-	if a < 0 || a >= len(names) {
-		return names[0]
+	if a < 0 || a >= len(actionNames) {
+		return actionNames[0]
 	}
-	return names[a]
+	return actionNames[a]
 }
 
 
@@ -122,8 +127,8 @@ type TheStatusBar interface {
 type TheView interface {
 	Prepare()
 	Show()
-	StopApplication();
-	DisplayAt(left int, top int);
+	StopApplication()
+	DisplayAt(left int, top int)
 	GetDisplayRect() (int, int, int, int)
 	SetController(ctl TheViewController)
 	Refresh()
@@ -138,5 +143,7 @@ type TheView interface {
 	ShowGotoLineDialog()
 	ShowLine(lineIndex int)
 	ShowSearchResult(lineIndex int, start int, end int)
+	ShowShortcuts()
 	GetKeyShortcuts() map[Action][]string
+
 }

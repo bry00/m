@@ -259,6 +259,9 @@ func (ctl *Controller) DoAction(action view.Action) {
 	case view.ActionQuit:
 		ctl.view.StopApplication()
 		return
+	case view.ActionShortcuts:
+		ctl.view.ShowShortcuts()
+		return
 	default:
 		return
 	}

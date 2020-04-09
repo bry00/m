@@ -90,7 +90,7 @@ func (t *TextArea) getRulerPosition() int {
 	}
 	lines := t.view.ctl.NoOfLines()
 	if t.view.ctl.DataReady() {
-		lines = utl.Min(t.height, lines)
+		lines = utl.MinInt(t.height, lines)
 	} else {
 		lines = t.height
 	}
@@ -338,10 +338,12 @@ var (
 		{key: tcell.KeyDown, action: view.ActionScrollDown},
 		{key: tcell.KeyEnter, action: view.ActionScrollDown},
 		{key: tcell.KeyPgDn, action: view.ActionPageDown},
+		{key: tcell.KeyF8, action: view.ActionPageDown},
 		{key: tcell.KeyCtrlF, action: view.ActionPageDown},
 		{key: tcell.KeyPgDn, mod: tcell.ModCtrl, action: view.ActionBottom},
 		{key: tcell.KeyCtrlSpace, action: view.ActionPageUp},
 		{key: tcell.KeyPgUp, action: view.ActionPageUp},
+		{key: tcell.KeyF7, action: view.ActionPageDown},
 		{key: tcell.KeyPgUp, mod: tcell.ModCtrl, action: view.ActionTop},
 		{key: tcell.KeyCtrlB, action: view.ActionPageUp},
 		{key: tcell.KeyCtrlN, action: view.ActionFlipNumbers},
@@ -370,6 +372,10 @@ var (
 
 		{r: 'q', action: view.ActionQuit},
 		{key: tcell.KeyEscape, action: view.ActionQuit},
+
+		{key: tcell.KeyF1, action: view.ActionShortcuts},
+		{r: 'h', action: view.ActionShortcuts},
+		{r: '?', action: view.ActionShortcuts},
 	}
 	textAreaShortcutMap *shortcutMap
 )
