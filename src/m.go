@@ -9,87 +9,65 @@ import (
 	"github.com/bry00/m/view/tv"
 	"log"
 	"os"
-	"path/filepath"
+	"path"
+	"strings"
 )
 
+var prog string = getProg()
+
+var (
+	fileName string
+	title    string
+)
+
+func init() {
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Program %s is designated to view text files.\n", prog)
+		fmt.Fprintf(os.Stderr, "Usage:\n")
+		fmt.Fprintf(os.Stderr, "\t%s <options> [file]\n", prog)
+		fmt.Fprintf(os.Stderr, "where <options> are:\n")
+
+		fmt.Fprintf(os.Stderr, "\t-h\thelp, shows this text\n")
+		flag.VisitAll(func(f *flag.Flag) {
+			fmt.Fprintf(os.Stderr, "\t-%v\t%v\n", f.Name, f.Usage)
+			if f.DefValue != "" {
+				fmt.Fprintf(os.Stderr, "\t\tdefault: %v\n", f.DefValue)
+			}
+		})
+		fmt.Fprintf(os.Stderr, "Configuration file: %s\n", config.GetConfigFileName(prog))
+	}
+
+	flag.StringVar(&title, "t", "", "title to show")
+
+	flag.Parse()
+	setupLogger()
+}
 
 
 
 func main() {
-	setupLogger()
-	flag.Parse()
-
-	var fileName string
 
 	if len(flag.Args()) > 0 {
-		fileName = flag.Arg(0)
+		fileName = strings.Join(flag.Args(), " ")
 	}
 
-	conf := config.NewDefaultConfig()
+	conf := config.GetConfig(prog)
 
-	ctl := controller.NewController(fileName, buffers.NewBufferedDataDefault(), tv.NewView(), conf)
+	ctl := controller.NewController(fileName, title, buffers.NewBufferedDataDefault(), tv.NewView(), conf)
 	defer ctl.OnExit()
 	ctl.Run()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	//fileName := flag.Arg(0)
-	//file, err := os.Open(fileName)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//
-	//defer file.Close()
-	//data := buffers.NewBufferedDataDefault()
-	//
-	////scanner := bufio.NewScanner(os.Stdin)
-	//scanner := bufio.NewScanner(file)
-	//for scanner.Scan() {
-	//	data.AddLine(scanner.Text())
-	//}
-	//
-	//if err := scanner.Err(); err != nil {
-	//	fmt.Fprintln(os.Stderr, err.Error())
-	//}
-	//
-	////fmt.Fprintln(os.Stderr, data.Len())
-	////
-	////i := data.NewLineIndexer()
-	////for k := 0; k < 5; k++ {
-	////	i.IndexBegin()
-	////	for j:=0 ; i.IndexOK() && j < 5; i.IndexIncrement()  {
-	////		line, _ := i.GetLine()
-	////		fmt.Println(line)
-	////		j++
-	////	}
-	////	i.IndexSet(data.Len() - 5, false)
-	////	for ; i.IndexOK() ; i.IndexIncrement()  {
-	////		line, _ := i.GetLine()
-	////		fmt.Println(line)
-	////	}
-	////
-	////}
-	////
-	////
-	////
-	//data.Close()
-
 }
 
 func setupLogger() {
-	log.SetPrefix(fmt.Sprintf("%s: ", filepath.Base(os.Args[0])))
+	log.SetPrefix(fmt.Sprintf("%s: ", prog))
 	log.SetFlags(0)
+}
+
+func getProg() string {
+	base := path.Base(os.Args[0])
+	if i := strings.LastIndex(base, "."); i < 0 {
+		return base
+	} else {
+		return base[0: i]
+	}
 }

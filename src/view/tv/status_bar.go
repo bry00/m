@@ -56,7 +56,7 @@ func (sb *StatusBar) Draw(screen tcell.Screen) {
 	leftColumn, topRow, width, height := sb.view.GetDisplayRect()
 	x, y, width, _ := sb.GetInnerRect()
 	conf := sb.view.ctl.GetConfig()
-	color := tcell.GetColor(conf.StatusBarTextColor)
+	color := tcell.GetColor(conf.Visual.StatusBar.TextColor)
 	statusLabel := sb.status.Display()
 	statusLabelWidth := tview.TaggedStringWidth(statusLabel)
 	if statusLabelWidth > 0 {
@@ -71,7 +71,7 @@ func (sb *StatusBar) Draw(screen tcell.Screen) {
 		topRow++
 		leftColumn++
 		totalRows := sb.view.ctl.NoOfLines()
-		text = fmt.Sprintf("[::%s]%d:%d - %d / %d", conf.StatusBarTextAttrs, topRow, leftColumn, bottomRow, totalRows)
+		text = fmt.Sprintf("[::%s]%d:%d - %d / %d", conf.Visual.StatusBar.TextAttrs, topRow, leftColumn, bottomRow, totalRows)
 	}
 	tview.Print(screen, text, x+1, y, width, tview.AlignLeft, color)
 

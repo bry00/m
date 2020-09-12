@@ -51,8 +51,8 @@ func (t *TextArea) drawRuler(screen tcell.Screen, x int, y int, textWidth int) {
 		line strings.Builder
 	)
 	config := t.view.ctl.GetConfig()
-	color := tcell.GetColor(config.RulerColor)
-	attr := fmt.Sprintf("[::%s]", config.RulerAttrs)
+	color := tcell.GetColor(config.Visual.Ruler.Color)
+	attr := fmt.Sprintf("[::%s]", config.Visual.Ruler.Attrs)
 	line.Grow(textWidth + len(attr))
 
 	for j := 0; j < 3; j++ {
@@ -124,10 +124,10 @@ func numberString(n int, width int) string {
 func (t *TextArea) Draw(screen tcell.Screen) {
 	if t.view.ctl != nil {
 		conf := t.view.ctl.GetConfig()
-		numbersColor := tcell.GetColor(conf.NumbersColor)
-		arrowLeft := fmt.Sprintf("[%s::%s]%c", conf.SideArrowsColor, conf.SideArrowsArttrs, conf.SideArrowLeft)
-		arrowRight := fmt.Sprintf("[%s::%s]%c", conf.SideArrowsColor, conf.SideArrowsArttrs, conf.SideArrowRight)
-		tabSpaces := strings.Repeat(" ", conf.SpacesPerTab)
+		numbersColor := tcell.GetColor(conf.Visual.Numbers.Color)
+		arrowLeft := fmt.Sprintf("[%s::%s]%c", conf.Visual.SideArrows.Color, conf.Visual.SideArrows.Attrs, conf.Visual.SideArrows.Left)
+		arrowRight := fmt.Sprintf("[%s::%s]%c", conf.Visual.SideArrows.Color, conf.Visual.SideArrows.Attrs, conf.Visual.SideArrows.Right)
+		tabSpaces := strings.Repeat(" ", conf.View.SpacesPerTab)
 		t.Box.Draw(screen)
 		xBase, yTop, width, height := t.GetInnerRect()
 		showRuler := t.showRuler && height > rulerHeight
@@ -215,7 +215,7 @@ func (t *TextArea) Draw(screen tcell.Screen) {
 						tview.PrintSimple(screen, arrowLeft, xLeft, y)
 
 					}
-					tview.Print(screen, line, xLeft+1, y, textWidth, tview.AlignLeft, tcell.ColorWhite)
+					tview.Print(screen, line, xLeft+1, y, textWidth, tview.AlignLeft, tview.Styles.PrimaryTextColor)
 					if lineLen > textWidth {
 						tview.PrintSimple(screen, arrowRight, xLeft+textWidth+1, y)
 					}
@@ -229,98 +229,6 @@ func (t *TextArea) Draw(screen tcell.Screen) {
 		}
 	}
 }
-
-
-//func (t *TextArea) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
-//	return t.WrapInputHandler(func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
-//		//if t.view.ctl != nil {
-//		action := view.ActionUnknown
-//		t.view.statusBar.Reset()
-//		switch event.Key() {
-//		case tcell.KeyUp:
-//			action = view.ActionScrollUp
-//		case tcell.KeyEnter:
-//			fallthrough
-//		case tcell.KeyDown:
-//			action = view.ActionScrollDown
-//		case tcell.KeyPgDn:
-//			if event.Modifiers()&tcell.ModCtrl != 0 {
-//				action = view.ActionBottom
-//			} else {
-//				action = view.ActionPageDown
-//			}
-//		case tcell.KeyCtrlF:
-//			action = view.ActionPageDown
-//		case tcell.KeyCtrlSpace:
-//			action = view.ActionPageUp
-//		case tcell.KeyPgUp:
-//			if event.Modifiers()&tcell.ModCtrl != 0 {
-//				action = view.ActionTop
-//			} else {
-//				action = view.ActionPageUp
-//			}
-//		case tcell.KeyCtrlB:
-//			action = view.ActionPageUp
-//		case tcell.KeyCtrlN:
-//			action = view.ActionFlipNumbers
-//		case tcell.KeyCtrlL:
-//			fallthrough
-//		case tcell.KeyCtrlG:
-//			action = view.ActionGotoLine
-//		case tcell.KeyHome:
-//			if event.Modifiers()&tcell.ModCtrl != 0 {
-//				action = view.ActionTop
-//			} else {
-//				action = view.ActionHome
-//			}
-//		case tcell.KeyEnd:
-//			if event.Modifiers()&tcell.ModCtrl != 0 {
-//				action = view.ActionBottom
-//			} else {
-//				action = view.ActionEnd
-//			}
-//		case tcell.KeyLeft:
-//			action = view.ActionScrollRight
-//		case tcell.KeyRight:
-//			action = view.ActionScrollLeft
-//		case tcell.KeyRune:
-//			switch event.Rune() {
-//			case '/':
-//				action = view.ActionSearch
-//			case ' ':
-//				action = view.ActionPageDown
-//			case 'q':
-//				action = view.ActionQuit
-//			case 'n':
-//				action = view.ActionFindNext
-//			case 'N':
-//				action = view.ActionFindPrevious
-//			case '-':
-//				action = view.ActionMoveRulerUp
-//			case '+':
-//				action = view.ActionMoveRulerDown
-//			case 'r':
-//				action = view.ActionFlipRuler
-//			case ':':
-//				action = view.ActionGotoLine
-//			case '\\':
-//				action = view.ActionReset
-//			case 'g':
-//				action = view.ActionTop
-//			case 'G':
-//				action = view.ActionBottom
-//			default:
-//				return
-//			}
-//		case tcell.KeyEscape:
-//			action = view.ActionQuit
-//		default:
-//			return
-//		}
-//		t.view.ctl.DoAction(action)
-//		//}
-//	})
-//}
 
 func (t *TextArea) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	return t.WrapInputHandler(func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
@@ -359,6 +267,7 @@ var (
 		{r: ' ', action: view.ActionPageDown},
 		{r: '/', action: view.ActionSearch},
 
+		{r: 'f', action: view.ActionFindFirst},
 		{r: 'n', action: view.ActionFindNext},
 		{r: 'N', action: view.ActionFindPrevious},
 		{r: 'r', action: view.ActionFlipRuler},

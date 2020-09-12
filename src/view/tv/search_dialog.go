@@ -6,10 +6,14 @@ import (
 	"strings"
 )
 
+const keyFirst = 'f'
+const keyNext  = 'n'
+
 type SearchDialog struct {
 	*tview.Form
-	view        *View
-	startOfEdit  bool
+	view               *View
+	startOfEdit         bool
+	searchFromBeginning bool
 }
 
 func newSearchDialog(view *View, screenWidth int) (dialog *SearchDialog, width int, height int) {
@@ -35,13 +39,37 @@ func newSearchDialog(view *View, screenWidth int) (dialog *SearchDialog, width i
 		if len(searchText) > 0 {
 			//view.statusBar.Message("SEARCH: %s", searchText)
 			view.ctl.SetSearchText(searchText, dialog.IsRegexSearch(), dialog.IsIgnoreCaseSearch())
-			view.app.QueueEvent(tcell.NewEventKey(tcell.KeyRune, 'n', 0))
+			var key rune
+			if dialog.searchFromBeginning {
+				key = keyFirst
+			} else {
+				key = keyNext
+			}
+			view.app.QueueEvent(tcell.NewEventKey(tcell.KeyRune, key, 0))
 		}
 		view.pages.SwitchToPage(pageMain)
 	}
 	form.SetButtonsAlign(tview.AlignRight).
-		AddButton("Search", okFun).
-		AddButton("Cancel", cancelFun).
+		AddButton("Search", func() {
+			dialog.view.app.SetFocus(dialog.GetSearchField())
+			view.app.QueueEvent(tcell.NewEventKey(tcell.KeyEnter, '\x00', 0))
+		}).
+		AddButton("from Beginning", func() {
+			dialog.view.app.SetFocus(dialog.GetSearchField())
+			dialog.searchFromBeginning = true
+			view.app.QueueEvent(tcell.NewEventKey(tcell.KeyEnter, '\x00', 0))
+		}).
+		AddButton("Reset", func() {
+			f := dialog.GetSearchField()
+			f.SetText("")
+			dialog.GetIgnoreCaseCheck().SetChecked(false)
+			dialog.GetPlainCheck().SetChecked(false)
+			dialog.view.app.SetFocus(f)
+		}).
+		AddButton("Cancel", func() {
+			dialog.view.app.SetFocus(dialog.GetSearchField())
+			view.app.QueueEvent(tcell.NewEventKey(tcell.KeyEscape, '\x00', 0))
+		}).
 		SetCancelFunc(cancelFun)
 	form.SetBorder(true)
 
@@ -73,6 +101,7 @@ func (s *SearchDialog)Display() {
 	s.view.pages.ShowPage(pageSearch)
 	s.view.app.SetFocus(s.GetSearchField())
 	s.startOfEdit = true
+	s.searchFromBeginning = false
 	s.view.app.QueueEvent(tcell.NewEventKey(tcell.KeyHome, 0, 0))
 }
 
@@ -99,7 +128,5 @@ func (s *SearchDialog)IsIgnoreCaseSearch() bool {
 func (s *SearchDialog)IsRegexSearch() bool {
 	return !s.GetPlainCheck().IsChecked()
 }
-
-
 
 

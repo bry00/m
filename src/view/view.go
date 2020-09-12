@@ -20,6 +20,7 @@ const (
 	ActionHome
 	ActionEnd
 	ActionSearch
+	ActionFindFirst
 	ActionFindNext
 	ActionFindPrevious
 	ActionGotoLine
@@ -45,6 +46,7 @@ var actionNames = []string{
 "home",
 "end",
 "search",
+"find first",
 "find next",
 "find previous",
 "go to line",
@@ -145,5 +147,4 @@ type TheView interface {
 	ShowSearchResult(lineIndex int, start int, end int)
 	ShowShortcuts()
 	GetKeyShortcuts() map[Action][]string
-
 }

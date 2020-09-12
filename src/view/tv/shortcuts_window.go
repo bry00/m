@@ -31,10 +31,7 @@ type ShortcutsWindow struct {
 	pivot       int
 	rows        int
 	height      int
-	backgroundColor  tcell.Color
 	foregroundColor  tcell.Color
-	borderColor      tcell.Color
-	borderAttributes tcell.AttrMask
 }
 
 func newShortcutsWindow(shortcuts map[view.Action][]string, v *View, screeWidth int, screenHeight int) (win *ShortcutsWindow, width int, height int) {
@@ -47,10 +44,7 @@ func newShortcutsWindow(shortcuts map[view.Action][]string, v *View, screeWidth 
 		maxDescLen:  len(helpLabelShortcuts),
 		pivot:       0,
 		rows:        0,
-		backgroundColor:  tcell.GetColor(cnf.HelpBackgroundColor),
-		foregroundColor:  tcell.GetColor(cnf.HelpForegroundColor),
-		borderColor:      tcell.GetColor(cnf.HelpBorderColor),
-		borderAttributes: tcell.AttrNone,
+		foregroundColor:  tcell.GetColor(cnf.Visual.Help.ForegroundColor),
 	}
 
 	actions := view.ActionUnknown.Count()
@@ -71,9 +65,10 @@ func newShortcutsWindow(shortcuts map[view.Action][]string, v *View, screeWidth 
 	height = utl.MinInt(headerHeight + win.rows + footerHeight, screenHeight - 5)
 	v.shortcutWindow = win
 	win.SetBorder(true)
-	win.SetBorderColor(win.borderColor)
-	win.SetBorderAttributes(win.borderAttributes)
-	win.SetBackgroundColor(win.backgroundColor)
+
+	win.SetBorderColor(tcell.GetColor(cnf.Visual.Help.BorderColor))
+	win.SetBorderAttributes(tcell.AttrNone)
+	win.SetBackgroundColor(tcell.GetColor(cnf.Visual.Help.BackgroundColor))
 
 	return
 }
@@ -82,8 +77,8 @@ func (w *ShortcutsWindow) Draw(screen tcell.Screen) {
 	w.Box.Draw(screen)
 
 	def := tcell.StyleDefault
-	background := def.Background(w.backgroundColor)
-	border := background.Foreground(w.borderColor) | tcell.Style(w.borderAttributes)
+	background := def.Background(w.GetBackgroundColor())
+	border := background.Foreground(w.GetBorderColor()) | tcell.Style(w.GetBorderAttributes())
 
 	left, top, width, height := w.GetInnerRect()
 
@@ -188,15 +183,3 @@ func (w *ShortcutsWindow) InputHandler() func(event *tcell.EventKey, setFocus fu
 	})
 }
 
-
-//func (w *ShortcutsWindow) getBorderAttributes() tcell.AttrMask {
-//	return tcell.AttrMask(reflect.ValueOf(w).Elem().FieldByName("borderAttributes").Int())
-//}
-//
-//func  (w *ShortcutsWindow) getBorderColor() tcell.Color {
-//	return tcell.Color(reflect.ValueOf(w).Elem().FieldByName("borderColor").Int())
-//}
-//
-//func  (w *ShortcutsWindow) getBackgroundColor() tcell.Color {
-//	return tcell.Color(reflect.ValueOf(w).Elem().FieldByName("backgroundColor").Int())
-//}

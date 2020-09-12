@@ -5,7 +5,9 @@ import (
 	"container/list"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"strings"
 	"sync"
@@ -285,9 +287,23 @@ func (buff *BufferedData)loadFrame(frame *dataFrame) {
 		frame.block = &dataBlock{
 			lines: []string{},
 		}
-		scanner := bufio.NewScanner(f)
-		for l := 0; l < frame.noOfLines && scanner.Scan(); l++ {
-			frame.block.lines = append(frame.block.lines, strings.TrimRight(scanner.Text(), "\n"))
+		//scanner := bufio.NewScanner(f)
+		//for l := 0; l < frame.noOfLines && scanner.Scan(); l++ {
+		//	frame.block.lines = append(frame.block.lines, strings.TrimRight(scanner.Text(), "\n"))
+		//}
+		reader := bufio.NewReader(f)
+		eof := false
+		for l := 0; l < frame.noOfLines && !eof; l++ {
+			line, err := reader.ReadString('\n')
+			if err != nil {
+				if err == io.EOF {
+					eof = true
+				} else {
+					log.Fatal(err)
+				}
+			} else {
+				frame.block.lines = append(frame.block.lines, strings.TrimRight(line, "\n"))
+			}
 		}
 	}
 }

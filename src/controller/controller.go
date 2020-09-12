@@ -4,7 +4,9 @@ import (
 	"bufio"
 	"github.com/bry00/m/buffers"
 	"github.com/bry00/m/config"
+	"github.com/bry00/m/utl"
 	"github.com/bry00/m/view"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -31,7 +33,7 @@ type Controller struct {
 }
 
 
-func NewController(fileName string, data *buffers.BufferedData, view view.TheView, conf *config.Config) *Controller {
+func NewController(fileName string, title string, data *buffers.BufferedData, view view.TheView, conf *config.Config) *Controller {
 	var (
 		filePath *string = nil
 	)
@@ -59,6 +61,9 @@ func NewController(fileName string, data *buffers.BufferedData, view view.TheVie
 		searchLastRow:   -1,
 		searchLastCol:   -1,
 		pointedLine:   -1,
+	}
+	if !utl.IsEmptyString(title) {
+		result.title = &title
 	}
 	view.SetController(result)
 	return result
@@ -148,6 +153,7 @@ func (ctl *Controller) DoAction(action view.Action) {
 		ctl.view.ShowRuler(false)
 		ctl.view.ShowNumbers(false)
 		ctl.view.ShowSearchResult(-1, -1, -1)
+		ctl.searchString = ""
 	case view.ActionScrollUp:
 		top -= 1
 	case view.ActionScrollDown:
@@ -193,29 +199,38 @@ func (ctl *Controller) DoAction(action view.Action) {
 		ctl.searchLastCol = -1
 		ctl.view.ShowSearchResult(-1, -1, -1)
 		ctl.view.ShowSearchDialog()
+	case view.ActionFindFirst:
+		ctl.searchLastRow = 0
+		ctl.searchLastCol = 0
+		ctl.DoAction(view.ActionFindNext)
+		left, top, width, height = ctl.view.GetDisplayRect()
 	case view.ActionFindNext:
-		if ctl.searchLastRow < 0 {
-			ctl.searchLastRow = top
-		}
-		if ctl.searchLastCol < 0 {
-			ctl.searchLastCol = left
-		}
-		foundLine, foundStart, foundEnd, err := ctl.findNext(ctl.searchLastRow, ctl.searchLastCol)
-		if err == nil {
-			ctl.searchLastRow = foundLine
-			ctl.searchLastCol = foundEnd
-			ctl.view.ShowSearchResult(foundLine,foundStart, foundEnd)
-			if ctl.searchLastRow >= 0 {
-				left, top = setFoundStringPosition(left, top, width, height, foundLine, foundStart, foundEnd)
-				ctl.view.GetStatusBar().Message("Found at: %d:%d \"%s\"",
-					foundLine + 1, foundStart + 1, ctl.searchString)
-			} else {
-				ctl.view.GetStatusBar().Message("Cannot find: \"%s\"", ctl.searchString)
-				ctl.searchLastRow = 0
-				ctl.searchLastCol = 0
-			}
+		if len(ctl.searchString) == 0 {
+			ctl.DoAction(view.ActionSearch)
 		} else {
-			ctl.view.GetStatusBar().Message("Wrong search string \"%s\": %s", ctl.searchString, err.Error())
+			if ctl.searchLastRow < 0 {
+				ctl.searchLastRow = top
+			}
+			if ctl.searchLastCol < 0 {
+				ctl.searchLastCol = left
+			}
+			foundLine, foundStart, foundEnd, err := ctl.findNext(ctl.searchLastRow, ctl.searchLastCol)
+			if err == nil {
+				ctl.searchLastRow = foundLine
+				ctl.searchLastCol = foundEnd
+				ctl.view.ShowSearchResult(foundLine, foundStart, foundEnd)
+				if ctl.searchLastRow >= 0 {
+					left, top = setFoundStringPosition(left, top, width, height, foundLine, foundStart, foundEnd)
+					ctl.view.GetStatusBar().Message("Found at: %d:%d \"%s\"",
+						foundLine+1, foundStart+1, ctl.searchString)
+				} else {
+					ctl.view.GetStatusBar().Message("Cannot find: \"%s\"", ctl.searchString)
+					ctl.searchLastRow = 0
+					ctl.searchLastCol = 0
+				}
+			} else {
+				ctl.view.GetStatusBar().Message("Wrong search string \"%s\": %s", ctl.searchString, err.Error())
+			}
 		}
 	case view.ActionFindPrevious:
 		if ctl.searchLastRow < 0 {
@@ -291,7 +306,7 @@ func (ctl *Controller) findPrevious(startLine int, startColumn int) (int, int, i
 		err          error
 		re           *regexp.Regexp
 	)
-	tabSpaces := strings.Repeat(" ", ctl.conf.SpacesPerTab)
+	tabSpaces := strings.Repeat(" ", ctl.conf.View.SpacesPerTab)
 	searchString := ctl.searchString
 
 	if ctl.searchRegex {
@@ -355,7 +370,7 @@ func (ctl *Controller) findNext(startLine int, startColumn int) (int, int, int, 
 		err          error
 		re           *regexp.Regexp
 	)
-	tabSpaces := strings.Repeat(" ", ctl.conf.SpacesPerTab)
+	tabSpaces := strings.Repeat(" ", ctl.conf.View.SpacesPerTab)
 	searchString := ctl.searchString
 
 	if ctl.searchRegex {
@@ -440,10 +455,33 @@ func (ctl *Controller)readFile() {
 
 	_, _, _, height := ctl.view.GetDisplayRect()
 
-	scanner := bufio.NewScanner(file)
+	//scanner := bufio.NewScanner(file)
+	//ctl.dataReady = false
+	//go func() {
+	//	refreshPeriod := time.Duration(ctl.GetConfig().ViewRefreshSeconds) * time.Second
+	//	for !ctl.dataReady {
+	//		time.Sleep(refreshPeriod)
+	//		if !ctl.dataReady {
+	//			ctl.view.Refresh()
+	//		}
+	//	}
+	//}()
+	//
+	//for scanner.Scan() {
+	//	line := scanner.Text()
+	//	currentLength := lengthExpandedTabs(line, ctl.conf.SpacesPerTab)
+	//	ctl.data.AddLine(line)
+	//	if currentLength > ctl.maxLineLength {
+	//		ctl.maxLineLength = currentLength
+	//	}
+	//	if ctl.data.Len() <= height {
+	//		ctl.view.Refresh()
+	//	}
+	//}
+	reader := bufio.NewReader(file)
 	ctl.dataReady = false
 	go func() {
-		refreshPeriod := time.Duration(ctl.GetConfig().ViewRefreshSeconds) * time.Second
+		refreshPeriod := time.Duration(ctl.GetConfig().View.ViewRefreshSeconds) * time.Second
 		for !ctl.dataReady {
 			time.Sleep(refreshPeriod)
 			if !ctl.dataReady {
@@ -452,23 +490,29 @@ func (ctl *Controller)readFile() {
 		}
 	}()
 
-	for scanner.Scan() {
-		line := scanner.Text()
-		currentLength := lengthExpandedTabs(line, ctl.conf.SpacesPerTab)
-		ctl.data.AddLine(line)
-		if currentLength > ctl.maxLineLength {
-			ctl.maxLineLength = currentLength
-		}
-		if ctl.data.Len() <= height {
-			ctl.view.Refresh()
+	for eof := false; !eof; {
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			if err == io.EOF {
+				eof = true
+			} else {
+				log.Fatal(err)
+			}
+		} else {
+			currentLength := lengthExpandedTabs(line, ctl.conf.View.SpacesPerTab)
+			ctl.data.AddLine(line)
+			if currentLength > ctl.maxLineLength {
+				ctl.maxLineLength = currentLength
+			}
+			if ctl.data.Len() <= height {
+				ctl.view.Refresh()
+			}
 		}
 	}
+
 	ctl.dataReady = true
 	ctl.view.GetStatusBar().SafeStatus(view.StatusReady)
 	ctl.view.Refresh()
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
-	}
 }
 
 func fileExists(filename string) bool {

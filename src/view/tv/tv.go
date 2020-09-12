@@ -1,19 +1,11 @@
 package tv
 
 import (
-
-	//	"fmt"
-	//	"github.com/bry00/m/utl"
 	"github.com/bry00/m/view"
 	"github.com/gdamore/tcell"
 	"github.com/rivo/tview"
 	"log"
-
-	//"log"
-	//"strconv"
-	//"strings"
 )
-
 
 const rulerHeight = 3
 const nummbersWidth = 8
@@ -75,8 +67,6 @@ func (view *View)GetStatusBar() view.TheStatusBar {
 	return view.statusBar
 }
 
-
-
 func NewView() *View {
 	result := &View {
 		app: nil,
@@ -133,8 +123,31 @@ func (view *View) ShowGotoLineDialog() {
 	}
 }
 
+func (view *View)GenDefaultTheme() *tview.Theme {
+	t := &view.ctl.GetConfig().Visual.Theme
+
+	return &tview.Theme{
+		PrimitiveBackgroundColor:    tcell.GetColor(t.PrimitiveBackgroundColor),
+		ContrastBackgroundColor:     tcell.GetColor(t.ContrastBackgroundColor),
+		MoreContrastBackgroundColor: tcell.GetColor(t.MoreContrastBackgroundColor),
+		BorderColor:                 tcell.GetColor(t.BorderColor),
+		TitleColor:                  tcell.GetColor(t.TitleColor),
+		GraphicsColor:               tcell.GetColor(t.GraphicsColor),
+		PrimaryTextColor:            tcell.GetColor(t.PrimaryTextColor),
+		SecondaryTextColor:          tcell.GetColor(t.SecondaryTextColor),
+		TertiaryTextColor:           tcell.GetColor(t.TertiaryTextColor),
+		InverseTextColor:            tcell.GetColor(t.InverseTextColor),
+		ContrastSecondaryTextColor:  tcell.GetColor(t.ContrastSecondaryTextColor),
+	}
+}
 
 func (v *View) Prepare() {
+	tview.Styles = *v.GenDefaultTheme()
+
+	v.text.SetBorderColor(tview.Styles.BorderColor)
+	v.text.SetTitleColor(tview.Styles.TitleColor)
+	v.text.SetBackgroundColor(tview.Styles.PrimitiveBackgroundColor)
+
 	v.text.SetBorder(true).
 		//SetBorderAttributes(tcell.AttrBold).
 		SetTitle(" " + v.ctl.GetFileNameTitle() + " ")
@@ -160,8 +173,7 @@ func (v *View) Prepare() {
 		AddPage(pageGoToLine, v.newModal(newLineDialog(v)), true, false).
 		AddPage(pageShortcuts, v.newModal(newShortcutsWindow(v.GetKeyShortcuts(), v, screenWidth, screenHeight)), true, false)
 
-	// TODO:
-	//v.app.EnableMouse(true)
+	v.app.EnableMouse(true)
 }
 
 
