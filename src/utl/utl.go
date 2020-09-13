@@ -50,3 +50,19 @@ func OnEachFieldWithSuffix(structure interface{}, suffix string, transform func(
 	return OnEachStringField(structure, func(fname string) bool {return strings.HasSuffix(fname, suffix)}, transform)
 
 }
+
+func RemoveBackspaces(str string) string {
+	result := make([]rune, len(str))
+	length := 0
+	for _, r := range str {
+		if r == '\b' {
+			if length > 0 {
+				length--
+			}
+		} else {
+			result[length] = r
+			length++
+		}
+	}
+	return string(result[:length])
+}

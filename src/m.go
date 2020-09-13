@@ -18,6 +18,7 @@ var prog string = getProg()
 var (
 	fileName string
 	title    string
+	removeBackspaces bool
 )
 
 func init() {
@@ -38,6 +39,7 @@ func init() {
 	}
 
 	flag.StringVar(&title, "t", "", "title to show")
+	flag.BoolVar(&removeBackspaces, "b", false, "remove backspaces")
 
 	flag.Parse()
 	setupLogger()
@@ -53,7 +55,7 @@ func main() {
 
 	conf := config.GetConfig(prog)
 
-	ctl := controller.NewController(fileName, title, buffers.NewBufferedDataDefault(), tv.NewView(), conf)
+	ctl := controller.NewController(fileName, title, buffers.NewBufferedDataDefault(), tv.NewView(), conf, removeBackspaces)
 	defer ctl.OnExit()
 	ctl.Run()
 }

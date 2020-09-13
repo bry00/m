@@ -30,10 +30,11 @@ type Controller struct {
 	searchLastRow      int
 	searchLastCol      int
 	pointedLine        int
+	removeBackspaces   bool
 }
 
 
-func NewController(fileName string, title string, data *buffers.BufferedData, view view.TheView, conf *config.Config) *Controller {
+func NewController(fileName string, title string, data *buffers.BufferedData, view view.TheView, conf *config.Config, removeBackspaces bool) *Controller {
 	var (
 		filePath *string = nil
 	)
@@ -61,6 +62,7 @@ func NewController(fileName string, title string, data *buffers.BufferedData, vi
 		searchLastRow:   -1,
 		searchLastCol:   -1,
 		pointedLine:   -1,
+		removeBackspaces: removeBackspaces,
 	}
 	if !utl.IsEmptyString(title) {
 		result.title = &title
@@ -499,6 +501,9 @@ func (ctl *Controller)readFile() {
 				log.Fatal(err)
 			}
 		} else {
+			if ctl.removeBackspaces {
+				line = utl.RemoveBackspaces(line)
+			}
 			currentLength := lengthExpandedTabs(line, ctl.conf.View.SpacesPerTab)
 			ctl.data.AddLine(line)
 			if currentLength > ctl.maxLineLength {
