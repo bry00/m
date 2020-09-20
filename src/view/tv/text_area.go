@@ -172,36 +172,33 @@ func (t *TextArea) Draw(screen tcell.Screen) {
 				} else {
 					lineIndex := t.firstLine + i
 					if t.showNumbers {
-						//tview.Print(screen, fmt.Sprintf("[::b]%*d",
-						//	nummbersWidth, lineIndex+1),
-						//	xBase, y, nummbersWidth, tview.AlignLeft, numbersColor)
 						tview.Print(screen, numberString(lineIndex+1, nummbersWidth),
 							xBase, y, nummbersWidth, tview.AlignLeft, numbersColor)
 					}
-					r := []rune(tview.Escape(strings.Replace(line, "\t", tabSpaces, -1)))
-					if t.firstColumn > len(r) {
+					theLine := tview.Escape(strings.Replace(line, "\t", tabSpaces, -1))
+					if t.firstColumn > len(theLine) {
 						line = ""
 					} else {
 						if lineIndex == t.foundLine && t.foundStart >= 0 && t.foundEnd > t.firstColumn {
 							var str strings.Builder
 							if t.firstColumn < t.foundStart {
-								str.WriteString(string(r[t.firstColumn: t.foundStart]))
+								str.WriteString(theLine[t.firstColumn: t.foundStart])
 							}
 							if lineIndex == t.pointedLine {
 								str.WriteString(aNormal)
 							} else {
 								str.WriteString(aReverse)
 							}
-							str.WriteString(string(r[t.foundStart:t.foundEnd]))
+							str.WriteString(theLine[t.foundStart:t.foundEnd])
 							if lineIndex == t.pointedLine {
 								str.WriteString(aReverse)
 							} else {
 								str.WriteString(aNormal)
 							}
-							str.WriteString(string(r[t.foundEnd:]))
+							str.WriteString(theLine[t.foundEnd:])
 							line = str.String()
 						} else {
-							line = string(r[t.firstColumn:])
+							line = theLine[t.firstColumn:]
 						}
 					}
 
@@ -229,6 +226,7 @@ func (t *TextArea) Draw(screen tcell.Screen) {
 		}
 	}
 }
+
 
 func (t *TextArea) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	return t.WrapInputHandler(func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {

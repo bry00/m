@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/bry00/m/buffers"
 	"github.com/bry00/m/utl"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -11,6 +12,11 @@ import (
 )
 
 const ConfigFile = "config.yaml"
+
+type CnfDataBuffer struct {
+	BlockSizeLimitMB int `yaml:"blockSizeLimitMB"`
+	TotalSizeLimitMB int `yaml:"totalSizeLimitMB"`
+}
 
 type CnfView struct {
 	SpacesPerTab       int         `yaml:"spacesPerTab"`
@@ -68,13 +74,18 @@ type CnfVisual struct {
 }
 
 type Config struct {
-	View               CnfView     `yaml:"view"`
-	Visual             CnfVisual   `yaml:"visual"`
+	DataBuffer         CnfDataBuffer `yaml:"dataBuffer"`
+	View               CnfView       `yaml:"view"`
+	Visual             CnfVisual     `yaml:"visual"`
 }
 
 
 func NewDefaultConfig() *Config {
 	return &Config{
+		DataBuffer: CnfDataBuffer {
+			BlockSizeLimitMB: buffers.DefaultBlockSizeLimit / buffers.MB,
+			TotalSizeLimitMB: buffers.DefaultTotalSizeLimit / buffers.MB,
+		},
 		View: CnfView {
 			SpacesPerTab: 4,
 			ViewRefreshSeconds: 5,

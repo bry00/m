@@ -160,6 +160,10 @@ func NewBufferedData(blockSizeLimit int, totalSizeLimit int64) *BufferedData {
 	}
 }
 
+func NewBufferedDataMB(blockSizeLimitMB int, totalSizeLimitMB int) *BufferedData {
+	return NewBufferedData(blockSizeLimitMB * MB, int64(totalSizeLimitMB) * MB)
+}
+
 func NewBufferedDataDefault() *BufferedData {
 	return NewBufferedData(-1, -1)
 }
@@ -287,10 +291,6 @@ func (buff *BufferedData)loadFrame(frame *dataFrame) {
 		frame.block = &dataBlock{
 			lines: []string{},
 		}
-		//scanner := bufio.NewScanner(f)
-		//for l := 0; l < frame.noOfLines && scanner.Scan(); l++ {
-		//	frame.block.lines = append(frame.block.lines, strings.TrimRight(scanner.Text(), "\n"))
-		//}
 		reader := bufio.NewReader(f)
 		eof := false
 		for l := 0; l < frame.noOfLines && !eof; l++ {

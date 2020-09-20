@@ -19,11 +19,13 @@ var (
 	fileName string
 	title    string
 	removeBackspaces bool
+	blockSizeLimitMB int
+	totalSizeLimitMB int
 )
 
 func init() {
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Program %s is designated to view text files.\n", prog)
+		fmt.Fprintf(os.Stderr, "Program %s is designated to view and browse flat, text files.\n", prog)
 		fmt.Fprintf(os.Stderr, "Usage:\n")
 		fmt.Fprintf(os.Stderr, "\t%s <options> [file]\n", prog)
 		fmt.Fprintf(os.Stderr, "where <options> are:\n")
@@ -36,10 +38,13 @@ func init() {
 			}
 		})
 		fmt.Fprintf(os.Stderr, "Configuration file: %s\n", config.GetConfigFileName(prog))
+		fmt.Fprintf(os.Stderr, "Copyright (C) 2020 Bartek Rybak (licensed under the MIT license).\n")
 	}
 
 	flag.StringVar(&title, "t", "", "title to show")
 	flag.BoolVar(&removeBackspaces, "b", false, "remove backspaces")
+	flag.IntVar(&blockSizeLimitMB, "block", 0, "single data block size limit (MB)")
+	flag.IntVar(&totalSizeLimitMB, "total", 0, "total data size limit (MB)")
 
 	flag.Parse()
 	setupLogger()
@@ -55,7 +60,17 @@ func main() {
 
 	conf := config.GetConfig(prog)
 
-	ctl := controller.NewController(fileName, title, buffers.NewBufferedDataDefault(), tv.NewView(), conf, removeBackspaces)
+	if blockSizeLimitMB <= 0 {
+		blockSizeLimitMB = conf.DataBuffer.BlockSizeLimitMB
+	}
+	if totalSizeLimitMB <= 0 {
+		totalSizeLimitMB = conf.DataBuffer.TotalSizeLimitMB
+	}
+
+	//ctl := controller.NewController(fileName, title, buffers.NewBufferedDataDefault(), tv.NewView(), conf, removeBackspaces)
+	ctl := controller.NewController(fileName, title,
+		buffers.NewBufferedDataMB(blockSizeLimitMB, totalSizeLimitMB),
+		tv.NewView(), conf, removeBackspaces)
 	defer ctl.OnExit()
 	ctl.Run()
 }
