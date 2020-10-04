@@ -175,8 +175,6 @@ func (buff *BufferedData) AddLine(line string) {
 	lineLength := len(line)
 	if len(buff.frames) == 0 || buff.lastBlockSize > 0 && buff.lastBlockSize + lineLength > buff.blockSizeLimit {
 		buff.frames = append(buff.frames, *newDataFrame(buff.Len()))
-		//lastFrameIndex := len(buff.frames) - 1
-		//buff.lruFrames.PushFront(lastFrameIndex)
 		buff.lastBlockSize = 0
 	}
 	lastFrameIndex := len(buff.frames) - 1
@@ -188,7 +186,6 @@ func (buff *BufferedData) AddLine(line string) {
 }
 
 
-// TODO: sprawdzic
 func (buff *BufferedData) Close() {
 	if buff.swapFile != nil {
 		buff.swapFile.Close()
@@ -308,8 +305,6 @@ func (buff *BufferedData)loadFrame(frame *dataFrame) {
 	}
 }
 
-// Do poprawienia
-// Nie ma dodawania nowych framek do listy przy dodawaniu nowych wierszy, więc teraz to jest bez sensu
 func (buff *BufferedData)reloadFrame(frame *dataFrame, frameIndex int) {
 	if head := buff.lruFrames.Front(); head != nil && head.Value.(int) == frameIndex && frame.block != nil {
 		// No need to reload

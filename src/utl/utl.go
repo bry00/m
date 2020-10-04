@@ -1,8 +1,10 @@
 package utl
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
+	"unicode/utf8"
 )
 
 func MinInt(a, b int) int {
@@ -65,4 +67,45 @@ func RemoveBackspaces(str string) string {
 		}
 	}
 	return string(result[:length])
+}
+
+func SubstrFrom(str string, start int) string {
+	i := 0
+	for r := range str {
+		if i == start {
+			return str[r:]
+		}
+		i++
+	}
+	return ""
+}
+
+func Substr(str string, start int, end int) string {
+	start_idx := 0
+	i := 0
+	for r := range str {
+		if i == start {
+			start_idx = r
+		}
+		if i == end {
+			return str[start_idx:r]
+		}
+		i++
+	}
+	return str[start_idx:]
+}
+
+func R2x(str string, index int) int {
+	i := 0
+	for r := range str {
+		if i == index {
+			return r
+		}
+		i++
+	}
+	panic(fmt.Sprintf("Wrong runes index %d versus length of %d", index, utf8.RuneCountInString(str)))
+}
+
+func CountRunesAtIndex(str string, index int) int {
+	return utf8.RuneCountInString(str[0:index])
 }

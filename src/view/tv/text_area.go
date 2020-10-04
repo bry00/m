@@ -5,6 +5,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/bry00/m/utl"
 	"github.com/bry00/m/view"
@@ -176,20 +177,26 @@ func (t *TextArea) Draw(screen tcell.Screen) {
 							xBase, y, nummbersWidth, tview.AlignLeft, numbersColor)
 					}
 					theLine := tview.Escape(strings.Replace(line, "\t", tabSpaces, -1))
-					if t.firstColumn > len(theLine) {
+
+					if t.firstColumn >= utf8.RuneCountInString(theLine) {
 						line = ""
 					} else {
-						if lineIndex == t.foundLine && t.foundStart >= 0 && t.foundEnd > t.firstColumn {
+						firstColumnIdx := utl.R2x(theLine, t.firstColumn)
+						if lineIndex == t.foundLine && t.foundStart >= 0 && t.foundEnd > firstColumnIdx {
 							var str strings.Builder
-							if t.firstColumn < t.foundStart {
-								str.WriteString(theLine[t.firstColumn: t.foundStart])
+							if firstColumnIdx < t.foundStart {
+								str.WriteString(theLine[firstColumnIdx: t.foundStart])
 							}
 							if lineIndex == t.pointedLine {
 								str.WriteString(aNormal)
 							} else {
 								str.WriteString(aReverse)
 							}
-							str.WriteString(theLine[t.foundStart:t.foundEnd])
+							if firstColumnIdx > t.foundStart {
+								str.WriteString(theLine[firstColumnIdx:t.foundEnd])
+							} else {
+								str.WriteString(theLine[t.foundStart:t.foundEnd])
+							}
 							if lineIndex == t.pointedLine {
 								str.WriteString(aReverse)
 							} else {
@@ -198,14 +205,14 @@ func (t *TextArea) Draw(screen tcell.Screen) {
 							str.WriteString(theLine[t.foundEnd:])
 							line = str.String()
 						} else {
-							line = theLine[t.firstColumn:]
+							line = theLine[firstColumnIdx:]
 						}
 					}
 
 					lineLen := tview.TaggedStringWidth(line)
 
 					if lineIndex == t.pointedLine {
-						line = fmt.Sprintf("[::r]%-*s", textWidth + (len(line) - lineLen) + 5, line)
+						line = fmt.Sprintf("[::r]%-*s", textWidth, line)
 					}
 
 					if t.firstColumn > 0 {
@@ -213,6 +220,7 @@ func (t *TextArea) Draw(screen tcell.Screen) {
 
 					}
 					tview.Print(screen, line, xLeft+1, y, textWidth, tview.AlignLeft, tview.Styles.PrimaryTextColor)
+
 					if lineLen > textWidth {
 						tview.PrintSimple(screen, arrowRight, xLeft+textWidth+1, y)
 					}
