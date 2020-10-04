@@ -66,14 +66,12 @@ func (t *TextArea) drawRuler(screen tcell.Screen, x int, y int, textWidth int) {
 				if n%100 == 0 {
 					line.WriteString(strconv.Itoa(n / 100 % 100))
 				} else {
-					//line.WriteString(" ")
 					line.WriteRune(tcell.RuneVLine)
 				}
 			case 1:
 				if digit == 0 {
 					line.WriteString(strconv.Itoa(n / 10 % 10))
 				} else {
-					//line.WriteString(" ")
 					line.WriteRune(tcell.RunePlus)
 				}
 			case 2:

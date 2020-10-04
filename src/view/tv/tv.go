@@ -149,7 +149,6 @@ func (v *View) Prepare() {
 	v.text.SetBackgroundColor(tview.Styles.PrimitiveBackgroundColor)
 
 	v.text.SetBorder(true).
-		//SetBorderAttributes(tcell.AttrBold).
 		SetTitle(" " + v.ctl.GetFileNameTitle() + " ")
 	v.statusBar = newStatusBar(v)
 

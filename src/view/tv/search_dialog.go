@@ -37,7 +37,6 @@ func newSearchDialog(view *View, screenWidth int) (dialog *SearchDialog, width i
 	okFun := func() {
 		searchText := strings.TrimSpace(dialog.GetSearchText())
 		if len(searchText) > 0 {
-			//view.statusBar.Message("SEARCH: %s", searchText)
 			view.ctl.SetSearchText(searchText, dialog.IsRegexSearch(), dialog.IsIgnoreCaseSearch())
 			var key rune
 			if dialog.searchFromBeginning {
@@ -128,5 +127,3 @@ func (s *SearchDialog)IsIgnoreCaseSearch() bool {
 func (s *SearchDialog)IsRegexSearch() bool {
 	return !s.GetPlainCheck().IsChecked()
 }
-
-

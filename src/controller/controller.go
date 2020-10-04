@@ -467,29 +467,6 @@ func (ctl *Controller)readFile() {
 
 	_, _, _, height := ctl.view.GetDisplayRect()
 
-	//scanner := bufio.NewScanner(file)
-	//ctl.dataReady = false
-	//go func() {
-	//	refreshPeriod := time.Duration(ctl.GetConfig().ViewRefreshSeconds) * time.Second
-	//	for !ctl.dataReady {
-	//		time.Sleep(refreshPeriod)
-	//		if !ctl.dataReady {
-	//			ctl.view.Refresh()
-	//		}
-	//	}
-	//}()
-	//
-	//for scanner.Scan() {
-	//	line := scanner.Text()
-	//	currentLength := lengthExpandedTabs(line, ctl.conf.SpacesPerTab)
-	//	ctl.data.AddLine(line)
-	//	if currentLength > ctl.maxLineLength {
-	//		ctl.maxLineLength = currentLength
-	//	}
-	//	if ctl.data.Len() <= height {
-	//		ctl.view.Refresh()
-	//	}
-	//}
 	reader := bufio.NewReader(file)
 	ctl.dataReady = false
 	go func() {

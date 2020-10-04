@@ -6,7 +6,6 @@ import (
 	"github.com/bry00/m/view"
 	"github.com/gdamore/tcell"
 	"github.com/rivo/tview"
-	//"reflect"
 )
 
 const helpLabelAttribute = "b"
@@ -182,4 +181,3 @@ func (w *ShortcutsWindow) InputHandler() func(event *tcell.EventKey, setFocus fu
 		}
 	})
 }
-

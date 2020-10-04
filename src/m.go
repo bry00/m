@@ -15,6 +15,9 @@ import (
 
 var prog string = getProg()
 
+const DefaultBlockSizeMB =  4
+const DefaultTotalSizeMB = 64
+
 var (
 	fileName string
 	title    string
@@ -43,13 +46,12 @@ func init() {
 
 	flag.StringVar(&title, "t", "", "title to show")
 	flag.BoolVar(&removeBackspaces, "b", false, "remove backspaces")
-	flag.IntVar(&blockSizeLimitMB, "block", 0, "single data block size limit (MB)")
-	flag.IntVar(&totalSizeLimitMB, "total", 0, "total data size limit (MB)")
+	flag.IntVar(&blockSizeLimitMB, "block", DefaultBlockSizeMB, "single data block size limit (MB)")
+	flag.IntVar(&totalSizeLimitMB, "total", DefaultTotalSizeMB, "total data size limit (MB)")
 
 	flag.Parse()
 	setupLogger()
 }
-
 
 
 func main() {
@@ -67,7 +69,6 @@ func main() {
 		totalSizeLimitMB = conf.DataBuffer.TotalSizeLimitMB
 	}
 
-	//ctl := controller.NewController(fileName, title, buffers.NewBufferedDataDefault(), tv.NewView(), conf, removeBackspaces)
 	ctl := controller.NewController(fileName, title,
 		buffers.NewBufferedDataMB(blockSizeLimitMB, totalSizeLimitMB),
 		tv.NewView(), conf, removeBackspaces)

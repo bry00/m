@@ -16,8 +16,8 @@ import (
 const KB = 1024
 const MB = 1024 * KB
 
-const DefaultBlockSizeLimit =   1 * MB
-const DefaultTotalSizeLimit = 100 * MB
+const DefaultBlockSizeLimit =   4 * MB
+const DefaultTotalSizeLimit = 64 * MB
 
 
 
