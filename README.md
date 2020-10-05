@@ -5,7 +5,7 @@ so don't expect too much.
 
 The `m` viewer is designated specifically for viewing large text files or input streams, as viewed file is not fully loaded into memory, but are stored in a temporary file instead and read into memory in blocks as needed, not exceeding of specified total occupied memory size.
 
-The maximum size of occupied memory and the block size can be specified by `-total` and `-block` parameters respecively.
+The maximum size of occupied memory and the block size can be specified by `-total` and `-block` parameters respectively.
 
 
 > Note:
@@ -29,8 +29,6 @@ where <options> are:
 	-total	total data size limit (MB)
 		default: 64
 Press h when browsing, to see list of available shortcuts.
-Configuration file: ~/Library/Application Support/m/config.yaml
-Copyright (C) 2020 Bartek Rybak (licensed under the MIT license).
 ```
 
 When browsing press `h` or `F1` to display list of available keys and related actions.
