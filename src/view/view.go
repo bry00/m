@@ -16,7 +16,9 @@ const (
 	ActionTop
 	ActionBottom
 	ActionScrollLeft
+	ActionScrollFastLeft
 	ActionScrollRight
+	ActionScrollFastRight
 	ActionHome
 	ActionEnd
 	ActionSearch
@@ -42,7 +44,9 @@ var actionNames = []string{
 "top",
 "bottom",
 "scroll left",
+"scroll fast left",
 "scroll right",
+"scroll fast right",
 "home",
 "end",
 "search",

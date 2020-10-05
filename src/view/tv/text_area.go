@@ -58,15 +58,20 @@ func (t *TextArea) drawRuler(screen tcell.Screen, x int, y int, textWidth int) {
 
 	for j := 0; j < 3; j++ {
 		line.WriteString(attr)
+		topPrintedDigits := 0
 		for c := 0; c < textWidth; c++ {
 			n := (c + t.firstColumn + 1)
 			digit := n % 10
 			switch j {
 			case 0:
 				if n%100 == 0 {
-					line.WriteString(strconv.Itoa(n / 100 % 100))
+					topPrintedDigits, _ = line.WriteString(strconv.Itoa(n / 100 % 100))
 				} else {
-					line.WriteRune(tcell.RuneVLine)
+					if(topPrintedDigits > 1) {
+						topPrintedDigits--
+					} else {
+						line.WriteRune(tcell.RuneVLine)
+					}
 				}
 			case 1:
 				if digit == 0 {
@@ -267,6 +272,8 @@ var (
 		{key: tcell.KeyEnd, mod: tcell.ModCtrl, action: view.ActionBottom},
 		{key: tcell.KeyLeft, action: view.ActionScrollRight},
 		{key: tcell.KeyRight, action: view.ActionScrollLeft},
+		{key: tcell.KeyLeft, mod: tcell.ModShift, action: view.ActionScrollFastRight},
+		{key: tcell.KeyRight, mod: tcell.ModShift, action: view.ActionScrollFastLeft},
 
 		{r: ' ', action: view.ActionPageDown},
 		{r: '/', action: view.ActionSearch},

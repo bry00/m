@@ -40,6 +40,7 @@ func init() {
 				fmt.Fprintf(os.Stderr, "\t\tdefault: %v\n", f.DefValue)
 			}
 		})
+		fmt.Fprintf(os.Stderr, "Press h when browsing, to see list of available shortcuts.\n")
 		fmt.Fprintf(os.Stderr, "Configuration file: %s\n", config.GetConfigFileName(prog))
 		fmt.Fprintf(os.Stderr, "Copyright (C) 2020 Bartek Rybak (licensed under the MIT license).\n")
 	}

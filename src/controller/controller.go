@@ -180,6 +180,10 @@ func (ctl *Controller) DoAction(action view.Action) {
 		left += 1
 	case view.ActionScrollRight:
 		left -= 1
+	case view.ActionScrollFastLeft:
+		left += width / 2
+	case view.ActionScrollFastRight:
+		left -= width / 2
 	case view.ActionFlipRuler:
 		ctl.view.ShowRuler(!ctl.view.IsRulerShown())
 	case view.ActionMoveRulerUp:
