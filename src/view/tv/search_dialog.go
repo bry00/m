@@ -7,28 +7,29 @@ import (
 )
 
 const keyFirst = 'f'
-const keyNext  = 'n'
+const keyNext = 'n'
 
 type SearchDialog struct {
 	*tview.Form
-	view               *View
+	view                *View
 	startOfEdit         bool
 	searchFromBeginning bool
 }
 
 func newSearchDialog(view *View, screenWidth int) (dialog *SearchDialog, width int, height int) {
+	cnf := view.ctl.GetConfig()
 	width = screenWidth / 3 * 2
 	if width < 20 {
 		width = 20
 	}
 	form := tview.NewForm().
-		AddInputField("Find:", "", width - 10, nil, nil).
-    	AddCheckbox("Ignore Case:", false, nil).
+		AddInputField("Find:", "", width-10, nil, nil).
+		AddCheckbox("Ignore Case:", cnf.Search.IgnoreCase, nil).
 		AddCheckbox("Plain:", false, nil)
 
 	dialog = &SearchDialog{
-		Form:  form,
-		view:  view,
+		Form: form,
+		view: view,
 	}
 	cancelFun := func() {
 		view.pages.SwitchToPage(pageMain)
@@ -96,7 +97,7 @@ func newSearchDialog(view *View, screenWidth int) (dialog *SearchDialog, width i
 	return
 }
 
-func (s *SearchDialog)Display() {
+func (s *SearchDialog) Display() {
 	s.view.pages.ShowPage(pageSearch)
 	s.view.app.SetFocus(s.GetSearchField())
 	s.startOfEdit = true
@@ -104,26 +105,26 @@ func (s *SearchDialog)Display() {
 	s.view.app.QueueEvent(tcell.NewEventKey(tcell.KeyHome, 0, 0))
 }
 
-func (s *SearchDialog)GetSearchField() *tview.InputField {
+func (s *SearchDialog) GetSearchField() *tview.InputField {
 	return s.GetFormItem(0).(*tview.InputField)
 }
 
-func (s *SearchDialog)GetIgnoreCaseCheck() *tview.Checkbox {
+func (s *SearchDialog) GetIgnoreCaseCheck() *tview.Checkbox {
 	return s.GetFormItem(1).(*tview.Checkbox)
 }
 
-func (s *SearchDialog)GetPlainCheck() *tview.Checkbox {
+func (s *SearchDialog) GetPlainCheck() *tview.Checkbox {
 	return s.GetFormItem(2).(*tview.Checkbox)
 }
 
-func (s *SearchDialog)GetSearchText() string {
+func (s *SearchDialog) GetSearchText() string {
 	return s.GetSearchField().GetText()
 }
 
-func (s *SearchDialog)IsIgnoreCaseSearch() bool {
+func (s *SearchDialog) IsIgnoreCaseSearch() bool {
 	return s.GetIgnoreCaseCheck().IsChecked()
 }
 
-func (s *SearchDialog)IsRegexSearch() bool {
+func (s *SearchDialog) IsRegexSearch() bool {
 	return !s.GetPlainCheck().IsChecked()
 }

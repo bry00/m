@@ -17,29 +17,28 @@ import (
 )
 
 type Controller struct {
-	fileName          *string
-	title             *string
-	conf              *config.Config
-	maxLineLength      int
-	view               view.TheView
-	data              *buffers.BufferedData
-	dataReady          bool
-	searchString       string
-	searchRegex        bool
-	searchIgnoreCase   bool
-	searchLastRow      int
-	searchLastCol      int
-	pointedLine        int
-	removeBackspaces   bool
+	fileName         *string
+	title            *string
+	conf             *config.Config
+	maxLineLength    int
+	view             view.TheView
+	data             *buffers.BufferedData
+	dataReady        bool
+	searchString     string
+	searchRegex      bool
+	searchIgnoreCase bool
+	searchLastRow    int
+	searchLastCol    int
+	pointedLine      int
+	removeBackspaces bool
 }
-
 
 func NewController(fileName string, title string, data *buffers.BufferedData, view view.TheView, conf *config.Config, removeBackspaces bool) *Controller {
 	var (
 		filePath *string = nil
 	)
 	if len(fileName) > 0 {
-		if absPath, err := filepath.Abs(fileName);  err != nil {
+		if absPath, err := filepath.Abs(fileName); err != nil {
 			log.Fatal(err)
 		} else {
 			if !fileExists(absPath) {
@@ -48,20 +47,20 @@ func NewController(fileName string, title string, data *buffers.BufferedData, vi
 			filePath = &absPath
 		}
 	}
-	result := &Controller {
-		fileName:       filePath,
-		title:          nil,
-		conf:           conf,
-		maxLineLength:  0,
-		data:           data,
-		view:           view,
-		dataReady:      false,
+	result := &Controller{
+		fileName:         filePath,
+		title:            nil,
+		conf:             conf,
+		maxLineLength:    0,
+		data:             data,
+		view:             view,
+		dataReady:        false,
 		searchString:     "",
 		searchRegex:      false,
 		searchIgnoreCase: false,
-		searchLastRow:   -1,
-		searchLastCol:   -1,
-		pointedLine:   -1,
+		searchLastRow:    -1,
+		searchLastCol:    -1,
+		pointedLine:      -1,
 		removeBackspaces: removeBackspaces,
 	}
 	if !utl.IsEmptyString(title) {
@@ -109,7 +108,6 @@ func (ctl *Controller) GetFileNameTitle() string {
 	return *ctl.title
 }
 
-
 func (ctl *Controller) GetDataIterator(firstRow int) (*buffers.LineIndex, bool) {
 	result := ctl.data.NewLineIndexer()
 	if result.IndexSet(firstRow, false) {
@@ -119,18 +117,17 @@ func (ctl *Controller) GetDataIterator(firstRow int) (*buffers.LineIndex, bool) 
 	}
 }
 
-
 func setFoundStringPosition(left int, top int, width int, height int, foundLine int, foundStart int, foundEnd int, foundLineText string) (int, int) {
 
 	if foundLine >= 0 && foundStart >= 0 && foundEnd >= 0 {
 
-		if foundLine < top || foundLine >= top + height {
-			top = foundLine - height / 3
+		if foundLine < top || foundLine >= top+height {
+			top = foundLine - height/3
 		}
 		rStart := utl.CountRunesAtIndex(foundLineText, foundStart)
 		rEnd := utl.CountRunesAtIndex(foundLineText, foundEnd)
 
-		if rEnd >= left + width {
+		if rEnd >= left+width {
 			left = rEnd - width
 		}
 		if rStart < left {
@@ -146,7 +143,6 @@ func setFoundStringPosition(left int, top int, width int, height int, foundLine 
 	}
 	return left, top
 }
-
 
 func (ctl *Controller) DoAction(action view.Action) {
 	lines := ctl.data.Len()
@@ -180,6 +176,10 @@ func (ctl *Controller) DoAction(action view.Action) {
 		left += 1
 	case view.ActionScrollRight:
 		left -= 1
+	case view.ActionScrollFastLeft:
+		left += width / 2
+	case view.ActionScrollFastRight:
+		left -= width / 2
 	case view.ActionFlipRuler:
 		ctl.view.ShowRuler(!ctl.view.IsRulerShown())
 	case view.ActionMoveRulerUp:
@@ -249,11 +249,11 @@ func (ctl *Controller) DoAction(action view.Action) {
 		if err == nil {
 			ctl.searchLastRow = foundLine
 			ctl.searchLastCol = foundEnd
-			ctl.view.ShowSearchResult(foundLine,foundStart, foundEnd)
+			ctl.view.ShowSearchResult(foundLine, foundStart, foundEnd)
 			if ctl.searchLastRow >= 0 {
 				left, top = setFoundStringPosition(left, top, width, height, foundLine, foundStart, foundEnd, foundLineText)
 				ctl.view.GetStatusBar().Message("Previous at: %d:%d \"%s\"",
-					foundLine + 1, utl.CountRunesAtIndex(foundLineText, foundStart) + 1, ctl.searchString)
+					foundLine+1, utl.CountRunesAtIndex(foundLineText, foundStart)+1, ctl.searchString)
 			} else {
 				ctl.view.GetStatusBar().Message("Cannot find previous: \"%s\"", ctl.searchString)
 				ctl.searchLastRow = ctl.NoOfLines() - 1
@@ -268,7 +268,7 @@ func (ctl *Controller) DoAction(action view.Action) {
 				ctl.view.GetStatusBar().Message("Wrong line number: %d", ctl.pointedLine)
 			} else {
 				lineIndex := ctl.pointedLine - 1
-				top = lineIndex - height / 3
+				top = lineIndex - height/3
 				ctl.view.ShowLine(lineIndex)
 				ctl.view.GetStatusBar().Message("Line #%d", ctl.pointedLine)
 			}
@@ -286,14 +286,14 @@ func (ctl *Controller) DoAction(action view.Action) {
 	default:
 		return
 	}
-	if top >= lines - height {
+	if top >= lines-height {
 		top = lines - height
 	}
 	if top < 0 {
 		top = 0
 	}
-	if left > ctl.maxLineLength - width + 1 {
-			left = ctl.maxLineLength - width + 1
+	if left > ctl.maxLineLength-width+1 {
+		left = ctl.maxLineLength - width + 1
 	}
 	if left < 0 {
 		left = 0
@@ -309,8 +309,8 @@ func (ctl *Controller) SetSearchText(text string, regex bool, ignoreCase bool) {
 
 func (ctl *Controller) findPrevious(startLine int, startColumn int) (int, int, int, string, error) {
 	var (
-		err          error
-		re           *regexp.Regexp
+		err error
+		re  *regexp.Regexp
 	)
 	tabSpaces := strings.Repeat(" ", ctl.conf.View.SpacesPerTab)
 	searchString := ctl.searchString
@@ -328,18 +328,18 @@ func (ctl *Controller) findPrevious(startLine int, startColumn int) (int, int, i
 			searchString = strings.ToUpper(searchString)
 		}
 	}
-	search := func(txt string) ([]int) {
+	search := func(txt string) []int {
 		if ctl.searchRegex {
 			if f := re.FindAllStringIndex(txt, -1); f != nil {
-                return f[len(f)-1]
+				return f[len(f)-1]
 			}
-			return nil;
+			return nil
 		}
 		if ctl.searchIgnoreCase {
 			txt = strings.ToUpper(txt)
 		}
 		i := strings.LastIndex(txt, searchString)
-		if i<0 {
+		if i < 0 {
 			return nil
 		}
 		result := make([]int, 2)
@@ -354,7 +354,7 @@ func (ctl *Controller) findPrevious(startLine int, startColumn int) (int, int, i
 	i := ctl.data.NewLineIndexer()
 	i.IndexSet(startLine, false)
 	lastLine := ""
-	for ; i.IndexOK() ; i.IndexDecrement()  {
+	for ; i.IndexOK(); i.IndexDecrement() {
 		if txt, err := i.GetLine(); err == nil {
 			txt = strings.Replace(txt, "\t", tabSpaces, -1)
 			lastLine = txt
@@ -375,8 +375,8 @@ func (ctl *Controller) findPrevious(startLine int, startColumn int) (int, int, i
 
 func (ctl *Controller) findNext(startLine int, startColumn int) (int, int, int, string, error) {
 	var (
-		err          error
-		re           *regexp.Regexp
+		err error
+		re  *regexp.Regexp
 	)
 	tabSpaces := strings.Repeat(" ", ctl.conf.View.SpacesPerTab)
 	searchString := ctl.searchString
@@ -394,7 +394,7 @@ func (ctl *Controller) findNext(startLine int, startColumn int) (int, int, int, 
 			searchString = strings.ToUpper(searchString)
 		}
 	}
-	search := func(txt string) ([]int) {
+	search := func(txt string) []int {
 		if ctl.searchRegex {
 			return re.FindStringIndex(txt)
 		}
@@ -402,7 +402,7 @@ func (ctl *Controller) findNext(startLine int, startColumn int) (int, int, int, 
 			txt = strings.ToUpper(txt)
 		}
 		i := strings.Index(txt, searchString)
-		if i<0 {
+		if i < 0 {
 			return nil
 		}
 		result := make([]int, 2)
@@ -417,7 +417,7 @@ func (ctl *Controller) findNext(startLine int, startColumn int) (int, int, int, 
 	offset := startColumn
 	i := ctl.data.NewLineIndexer()
 	i.IndexSet(startLine, false)
-	for ; i.IndexOK() ; i.IndexIncrement()  {
+	for ; i.IndexOK(); i.IndexIncrement() {
 		if txt, err := i.GetLine(); err == nil {
 			lastLine := strings.Replace(txt, "\t", tabSpaces, -1)
 			if offset < len(lastLine) {
@@ -440,13 +440,11 @@ func (ctl *Controller) findNext(startLine int, startColumn int) (int, int, int, 
 	return line, start, end, foundLineText, nil
 }
 
-
 func (ctl *Controller) SetPointedLine(lineNo int) {
 	ctl.pointedLine = lineNo
 }
 
-
-func (ctl *Controller)readFile() {
+func (ctl *Controller) readFile() {
 	var (
 		file *os.File
 		err  error
@@ -463,7 +461,9 @@ func (ctl *Controller)readFile() {
 		ctl.view.GetStatusBar().SafeStatus(view.StatusReceivingData)
 		file = os.Stdin
 	}
-	ctl.data = buffers.NewBufferedDataDefault()
+	if ctl.data == nil || ctl.data.Len() > 0 {
+		ctl.data = buffers.NewBufferedDataDefault()
+	}
 
 	_, _, _, height := ctl.view.GetDisplayRect()
 
@@ -518,5 +518,5 @@ func fileExists(filename string) bool {
 func lengthExpandedTabs(line string, tabSpaces int) int {
 	total := utf8.RuneCountInString(line)
 	tabs := strings.Count(line, "\t")
-	return (total - tabs) + tabs * tabSpaces
+	return (total - tabs) + tabs*tabSpaces
 }

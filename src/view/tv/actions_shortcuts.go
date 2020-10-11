@@ -29,16 +29,16 @@ type shortcutMap struct {
 func (s *shortcut) keyName() string {
 	result := ""
 	m := []string{}
-	if s.mod & tcell.ModShift != 0 {
+	if s.mod&tcell.ModShift != 0 {
 		m = append(m, "Shift")
 	}
-	if s.mod & tcell.ModAlt != 0 {
+	if s.mod&tcell.ModAlt != 0 {
 		m = append(m, "Alt")
 	}
-	if s.mod & tcell.ModMeta != 0 {
+	if s.mod&tcell.ModMeta != 0 {
 		m = append(m, "Meta")
 	}
-	if s.mod & tcell.ModCtrl != 0 {
+	if s.mod&tcell.ModCtrl != 0 {
 		m = append(m, "Ctrl")
 	}
 
@@ -59,14 +59,13 @@ func (s *shortcut) keyName() string {
 		}
 	}
 	if len(m) != 0 {
-		if s.mod & tcell.ModCtrl != 0 && strings.HasPrefix(result, "Ctrl-") {
+		if s.mod&tcell.ModCtrl != 0 && strings.HasPrefix(result, "Ctrl-") {
 			result = result[5:]
 		}
 		return fmt.Sprintf("%s+%s", strings.Join(m, "+"), result)
 	}
 	return result
 }
-
 
 func generateActionShortcutNames(shortcuts []shortcut) map[view.Action][]string {
 	result := make(map[view.Action][]string)
@@ -78,9 +77,6 @@ func generateActionShortcutNames(shortcuts []shortcut) map[view.Action][]string 
 	}
 	return result
 }
-
-
-
 
 func newShortcutMap(shortcuts []shortcut) *shortcutMap {
 	result := &shortcutMap{
@@ -105,7 +101,7 @@ func newShortcutMap(shortcuts []shortcut) *shortcutMap {
 	for _, s := range shortcuts {
 		var modMap shortcutModActions
 		if s.r != 0 { // Rune
-			if s.mod & tcell.ModShift != 0 {
+			if s.mod&tcell.ModShift != 0 {
 				log.Panicf("Rune (%c) shortcut specified with shift modifier.", s.r)
 			}
 			modMap = getRuneMap(s.r)
@@ -126,7 +122,6 @@ func newShortcutMap(shortcuts []shortcut) *shortcutMap {
 	return result
 }
 
-
 func (sm *shortcutMap) mapKeys(ev *tcell.EventKey) view.Action {
 	result := view.ActionUnknown
 	key := ev.Key()
@@ -146,6 +141,3 @@ func (sm *shortcutMap) mapKeys(ev *tcell.EventKey) view.Action {
 	}
 	return result
 }
-
-
-

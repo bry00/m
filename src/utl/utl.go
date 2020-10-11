@@ -25,7 +25,7 @@ func IsEmptyString(str string) bool {
 	return len(strings.TrimSpace(str)) == 0
 }
 
-func OnEachStringField(structure interface{}, filter func(string)bool, transform func(string)string) int {
+func OnEachStringField(structure interface{}, filter func(string) bool, transform func(string) string) int {
 	result := 0
 	theStruct := reflect.ValueOf(structure)
 	stype := theStruct.Elem()
@@ -48,8 +48,8 @@ func OnEachStringField(structure interface{}, filter func(string)bool, transform
 	return result
 }
 
-func OnEachFieldWithSuffix(structure interface{}, suffix string, transform func(string)string) int {
-	return OnEachStringField(structure, func(fname string) bool {return strings.HasSuffix(fname, suffix)}, transform)
+func OnEachFieldWithSuffix(structure interface{}, suffix string, transform func(string) string) int {
+	return OnEachStringField(structure, func(fname string) bool { return strings.HasSuffix(fname, suffix) }, transform)
 
 }
 
@@ -67,32 +67,6 @@ func RemoveBackspaces(str string) string {
 		}
 	}
 	return string(result[:length])
-}
-
-func SubstrFrom(str string, start int) string {
-	i := 0
-	for r := range str {
-		if i == start {
-			return str[r:]
-		}
-		i++
-	}
-	return ""
-}
-
-func Substr(str string, start int, end int) string {
-	start_idx := 0
-	i := 0
-	for r := range str {
-		if i == start {
-			start_idx = r
-		}
-		if i == end {
-			return str[start_idx:r]
-		}
-		i++
-	}
-	return str[start_idx:]
 }
 
 func R2x(str string, index int) int {

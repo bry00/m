@@ -13,14 +13,14 @@ import (
 	"strings"
 )
 
-var prog string = getProg()
+var prog string = getProg(os.Args)
 
-const DefaultBlockSizeMB =  4
+const DefaultBlockSizeMB = 4
 const DefaultTotalSizeMB = 64
 
 var (
-	fileName string
-	title    string
+	fileName         string
+	title            string
 	removeBackspaces bool
 	blockSizeLimitMB int
 	totalSizeLimitMB int
@@ -40,6 +40,7 @@ func init() {
 				fmt.Fprintf(os.Stderr, "\t\tdefault: %v\n", f.DefValue)
 			}
 		})
+		fmt.Fprintf(os.Stderr, "Press h when browsing, to see list of available shortcuts.\n")
 		fmt.Fprintf(os.Stderr, "Configuration file: %s\n", config.GetConfigFileName(prog))
 		fmt.Fprintf(os.Stderr, "Copyright (C) 2020 Bartek Rybak (licensed under the MIT license).\n")
 	}
@@ -49,25 +50,20 @@ func init() {
 	flag.IntVar(&blockSizeLimitMB, "block", DefaultBlockSizeMB, "single data block size limit (MB)")
 	flag.IntVar(&totalSizeLimitMB, "total", DefaultTotalSizeMB, "total data size limit (MB)")
 
-	flag.Parse()
-	setupLogger()
 }
 
-
 func main() {
+	flag.Parse()
+	setupLogger()
 
 	if len(flag.Args()) > 0 {
-		fileName = strings.Join(flag.Args(), " ")
+		fileName = composeFileName(flag.Args())
 	}
 
 	conf := config.GetConfig(prog)
 
-	if blockSizeLimitMB <= 0 {
-		blockSizeLimitMB = conf.DataBuffer.BlockSizeLimitMB
-	}
-	if totalSizeLimitMB <= 0 {
-		totalSizeLimitMB = conf.DataBuffer.TotalSizeLimitMB
-	}
+	checkDefaultValue(&blockSizeLimitMB, conf.DataBuffer.BlockSizeLimitMB, buffers.DefaultBlockSizeLimit)
+	checkDefaultValue(&totalSizeLimitMB, conf.DataBuffer.TotalSizeLimitMB, buffers.DefaultTotalSizeLimit)
 
 	ctl := controller.NewController(fileName, title,
 		buffers.NewBufferedDataMB(blockSizeLimitMB, totalSizeLimitMB),
@@ -81,11 +77,24 @@ func setupLogger() {
 	log.SetFlags(0)
 }
 
-func getProg() string {
-	base := path.Base(os.Args[0])
+func getProg(args []string) string {
+	base := path.Base(args[0])
 	if i := strings.LastIndex(base, "."); i < 0 {
 		return base
 	} else {
-		return base[0: i]
+		return base[0:i]
+	}
+}
+
+func composeFileName(args []string) string {
+	return strings.Join(args, " ")
+}
+
+func checkDefaultValue(value *int, config int, defaultValue int) {
+	if config <= 0 {
+		config = defaultValue
+	}
+	if *value <= 0 {
+		*value = config
 	}
 }

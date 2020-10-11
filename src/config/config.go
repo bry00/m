@@ -19,107 +19,114 @@ type CnfDataBuffer struct {
 }
 
 type CnfView struct {
-	SpacesPerTab       int         `yaml:"spacesPerTab"`
-	ViewRefreshSeconds int         `yaml:"viewRefreshSeconds"`
+	SpacesPerTab       int `yaml:"spacesPerTab"`
+	ViewRefreshSeconds int `yaml:"viewRefreshSeconds"`
 }
 
 type CnfSideArrows struct {
-	Left               int         `yaml:"left"`
-	Right              int         `yaml:"right"`
-	Color              string      `yaml:"color"`
-	Attrs              string      `yaml:"attrs"`
+	Left  int    `yaml:"left"`
+	Right int    `yaml:"right"`
+	Color string `yaml:"color"`
+	Attrs string `yaml:"attrs"`
 }
 
 type CnfStatusBar struct {
-	TextColor          string      `yaml:"textColor"`
-	TextAttrs          string      `yaml:"textAttrs"`
+	TextColor string `yaml:"textColor"`
+	TextAttrs string `yaml:"textAttrs"`
 }
 
 type CnfRuler struct {
-	Color          string          `yaml:"color"`
-	Attrs          string          `yaml:"attrs"`
+	Color string `yaml:"color"`
+	Attrs string `yaml:"attrs"`
 }
 
 type CnfNumbers struct {
-	Color          string          `yaml:"color"`
+	Color string `yaml:"color"`
 }
 
 type CnfHelp struct {
-	BackgroundColor    string      `yaml:"backgroundColor"`
-	ForegroundColor    string      `yaml:"foregroundColor"`
-	BorderColor        string      `yaml:"borderColor"`
+	BackgroundColor string `yaml:"backgroundColor"`
+	ForegroundColor string `yaml:"foregroundColor"`
+	BorderColor     string `yaml:"borderColor"`
+}
+
+type CnfSearch struct {
+	IgnoreCase bool `yaml:"ignoreCase"`
 }
 
 type CnfTheme struct {
-	PrimitiveBackgroundColor     string
-	ContrastBackgroundColor      string
-	MoreContrastBackgroundColor  string
-	BorderColor                  string
-	TitleColor                   string
-	GraphicsColor                string
-	PrimaryTextColor             string
-	SecondaryTextColor           string
-	TertiaryTextColor            string
-	InverseTextColor             string
-	ContrastSecondaryTextColor   string
+	PrimitiveBackgroundColor    string
+	ContrastBackgroundColor     string
+	MoreContrastBackgroundColor string
+	BorderColor                 string
+	TitleColor                  string
+	GraphicsColor               string
+	PrimaryTextColor            string
+	SecondaryTextColor          string
+	TertiaryTextColor           string
+	InverseTextColor            string
+	ContrastSecondaryTextColor  string
 }
 
 type CnfVisual struct {
-	SideArrows         CnfSideArrows `yaml:"sideArrows"`
-	StatusBar          CnfStatusBar  `yaml:"statusBar"`
-	Ruler              CnfRuler      `yaml:"ruler"`
-	Numbers            CnfNumbers    `yaml:"numbers"`
-	Help               CnfHelp       `yaml:"help"`
-	Theme              CnfTheme      `yaml:"theme"`
+	SideArrows CnfSideArrows `yaml:"sideArrows"`
+	StatusBar  CnfStatusBar  `yaml:"statusBar"`
+	Ruler      CnfRuler      `yaml:"ruler"`
+	Numbers    CnfNumbers    `yaml:"numbers"`
+	Help       CnfHelp       `yaml:"help"`
+	Theme      CnfTheme      `yaml:"theme"`
 }
 
 type Config struct {
-	DataBuffer         CnfDataBuffer `yaml:"dataBuffer"`
-	View               CnfView       `yaml:"view"`
-	Visual             CnfVisual     `yaml:"visual"`
+	DataBuffer CnfDataBuffer `yaml:"dataBuffer"`
+	Search     CnfSearch     `yaml:"search"`
+	View       CnfView       `yaml:"view"`
+	Visual     CnfVisual     `yaml:"visual"`
 }
-
 
 func NewDefaultConfig() *Config {
 	return &Config{
-		DataBuffer: CnfDataBuffer {
+		DataBuffer: CnfDataBuffer{
 			BlockSizeLimitMB: buffers.DefaultBlockSizeLimit / buffers.MB,
 			TotalSizeLimitMB: buffers.DefaultTotalSizeLimit / buffers.MB,
 		},
-		View: CnfView {
-			SpacesPerTab: 4,
+		Search: CnfSearch{
+			IgnoreCase: true,
+		},
+		View: CnfView{
+			SpacesPerTab:       4,
 			ViewRefreshSeconds: 5,
 		},
-		Visual: CnfVisual {
-			SideArrows: CnfSideArrows {
-				Left:      '\u25C0',
-				Right:     '\u25B6',
+		Visual: CnfVisual{
+			SideArrows: CnfSideArrows{
+				Left:  '\u25C0',
+				Right: '\u25B6',
 				// Left:      '\u2B05',
 				// Right:     '\u2B95',
 				// Left:      '\u2B45',
 				// Right:     '\u2B46',
 				// Left:      '\u276E',
 				// Right:     '\u276F',
-				Color:     "orange",
-				Attrs:     "b",
+				Color: "orange",
+				Attrs: "b",
 			},
-			Ruler: CnfRuler {
+			Ruler: CnfRuler{
 				Color: "gold",
 				Attrs: "rb",
 			},
-			StatusBar: CnfStatusBar {
+			StatusBar: CnfStatusBar{
 				TextColor: "gold",
 				TextAttrs: "",
 			},
-			Numbers: CnfNumbers {
-				Color:        "gold",
+			Numbers: CnfNumbers{
+				Color: "gold",
 			},
-			Help:CnfHelp{
+			Help: CnfHelp{
 				BackgroundColor: "beige",
 				ForegroundColor: "darkGreen",
 				BorderColor:     "darkGreen",
 			},
-			Theme:CnfTheme{
+			Theme: CnfTheme{
 				PrimitiveBackgroundColor:    "#001000",
 				ContrastBackgroundColor:     "maroon",
 				MoreContrastBackgroundColor: "goldenRod",
@@ -135,7 +142,6 @@ func NewDefaultConfig() *Config {
 		},
 	}
 }
-
 
 func GetConfig(prog string) *Config {
 	result := NewDefaultConfig() // Default config
@@ -157,8 +163,8 @@ func GetConfig(prog string) *Config {
 			}
 		}
 	}
-	utl.OnEachFieldWithSuffix(result,"Color",
-		func(s string) string {return strings.ToLower(strings.TrimSpace(s))})
+	utl.OnEachFieldWithSuffix(result, "Color",
+		func(s string) string { return strings.ToLower(strings.TrimSpace(s)) })
 	return result
 }
 

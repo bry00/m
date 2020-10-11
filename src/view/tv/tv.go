@@ -10,14 +10,14 @@ import (
 const rulerHeight = 3
 const nummbersWidth = 8
 
-const pageMain   = "main"
+const pageMain = "main"
 const pageSearch = "search"
 const pageGoToLine = "goto-line"
 const pageShortcuts = "shortcuts"
 
 type View struct {
 	app            *tview.Application
-	ctl             view.TheViewController
+	ctl            view.TheViewController
 	pages          *tview.Pages
 	text           *TextArea
 	statusBar      *StatusBar
@@ -25,6 +25,7 @@ type View struct {
 	lineDialog     *LineDialog
 	shortcutWindow *ShortcutsWindow
 }
+
 func (view *View) ShowSearchResult(lineIndex int, start int, end int) {
 	view.text.foundLine = lineIndex
 	view.text.foundStart = start
@@ -62,16 +63,15 @@ func (view *View) SetRulerPosition(index int) {
 	view.text.rulerPosition = index
 }
 
-
-func (view *View)GetStatusBar() view.TheStatusBar {
+func (view *View) GetStatusBar() view.TheStatusBar {
 	return view.statusBar
 }
 
 func NewView() *View {
-	result := &View {
-		app: nil,
-		ctl: nil,
-		pages: tview.NewPages(),
+	result := &View{
+		app:          nil,
+		ctl:          nil,
+		pages:        tview.NewPages(),
 		searchDialog: nil,
 		lineDialog:   nil,
 		statusBar:    nil,
@@ -81,7 +81,7 @@ func NewView() *View {
 	return result
 }
 
-func (v *View)SetController(ctl view.TheViewController) {
+func (v *View) SetController(ctl view.TheViewController) {
 	v.ctl = ctl
 }
 
@@ -89,22 +89,20 @@ func (v *View) StopApplication() {
 	v.app.Stop()
 }
 
-
-func (v *View)DisplayAt(left int, top int) {
+func (v *View) DisplayAt(left int, top int) {
 	v.text.firstLine = top
 	v.text.firstColumn = left
 }
 
-func (v *View)GetDisplayRect() (int, int, int, int) {
+func (v *View) GetDisplayRect() (int, int, int, int) {
 	return v.text.firstColumn, v.text.firstLine, v.text.width, v.text.height
 }
 
-func (v *View)Refresh() {
+func (v *View) Refresh() {
 	v.app.Draw()
 }
 
-
-func (v *View)newModal(modal tview.Primitive, width int, height int) tview.Primitive {
+func (v *View) newModal(modal tview.Primitive, width int, height int) tview.Primitive {
 	return tview.NewGrid().
 		SetColumns(0, width, 0).
 		SetRows(0, height, 0).
@@ -123,7 +121,7 @@ func (view *View) ShowGotoLineDialog() {
 	}
 }
 
-func (view *View)GenDefaultTheme() *tview.Theme {
+func (view *View) GenDefaultTheme() *tview.Theme {
 	t := &view.ctl.GetConfig().Visual.Theme
 
 	return &tview.Theme{
@@ -174,7 +172,6 @@ func (v *View) Prepare() {
 
 	v.app.EnableMouse(true)
 }
-
 
 func (v *View) Show() {
 	if err := v.app.SetRoot(v.pages, true).Run(); err != nil {

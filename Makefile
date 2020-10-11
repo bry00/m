@@ -31,6 +31,14 @@ clean: ## Clean build
 .PHONY: rebuild
 rebuild: clean build ## Rebuild the module
 
+.PHONY: test
+test: build ## Test the module
+	@echo "Testing module $(MODULE)" &&\
+	cd $(SOURCE_DIR) &&\
+	go test -count=1 -v ./... &&\
+	echo "Success: the module's tests passed."
+
+
 .PHONY: install
 install: $(INSTALL_DIR)/$(MODULE) ## Install the module
 

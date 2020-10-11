@@ -16,41 +16,39 @@ import (
 const KB = 1024
 const MB = 1024 * KB
 
-const DefaultBlockSizeLimit =   4 * MB
+const DefaultBlockSizeLimit = 4 * MB
 const DefaultTotalSizeLimit = 64 * MB
-
-
 
 const swapFileTemplate = "m_swap_*.tmp"
 
 type dataBlock struct {
-	lines          []string
+	lines []string
 }
 
 type dataFrame struct {
-	offset     int64
-	firstLine  int
-	noOfLines  int
+	offset    int64
+	firstLine int
+	noOfLines int
 	block     *dataBlock
 }
 
 type BufferedData struct {
-	maxTotalSize    int64
-	blockSizeLimit  int
-	mutex			sync.Mutex
-	frames          []dataFrame
+	maxTotalSize   int64
+	blockSizeLimit int
+	mutex          sync.Mutex
+	frames         []dataFrame
 	lruFrames      *list.List
 	swapFile       *os.File
-	lastBlockSize   int
+	lastBlockSize  int
 }
 
 type LineIndex struct {
-	lineIndex   int
-	frameIndex  int
+	lineIndex  int
+	frameIndex int
 	data       *BufferedData
 }
 
-func (buff *BufferedData)NewLineIndexer() *LineIndex {
+func (buff *BufferedData) NewLineIndexer() *LineIndex {
 	return &LineIndex{
 		lineIndex:  0,
 		frameIndex: 0,
@@ -58,28 +56,28 @@ func (buff *BufferedData)NewLineIndexer() *LineIndex {
 	}
 }
 
-func (i *LineIndex)Index() int {
+func (i *LineIndex) Index() int {
 	return i.lineIndex
 }
 
-func (i *LineIndex)IndexBegin() bool {
+func (i *LineIndex) IndexBegin() bool {
 	i.lineIndex = 0
 	i.frameIndex = 0
 	return i.lineIndex < i.data.Len()
 }
 
-func (i *LineIndex)IndexOK() bool {
+func (i *LineIndex) IndexOK() bool {
 	if i.frameIndex >= 0 && i.frameIndex < len(i.data.frames) {
-       return i.data.frames[i.frameIndex].isLineInFrame(i.lineIndex)
+		return i.data.frames[i.frameIndex].isLineInFrame(i.lineIndex)
 	}
 	return false
 }
 
-func (i *LineIndex)IndexSet(index int, force bool) bool {
+func (i *LineIndex) IndexSet(index int, force bool) bool {
 	result := true
 	if i.lineIndex != index {
 		l := i.data.Len()
-		if index < 0  || index >= l {
+		if index < 0 || index >= l {
 			if force {
 				i.lineIndex = index
 			}
@@ -91,13 +89,14 @@ func (i *LineIndex)IndexSet(index int, force bool) bool {
 				i.frameIndex = 0
 			} else {
 				var frameIndexDelta int
-			    if index > i.lineIndex {
+				if index > i.lineIndex {
 					frameIndexDelta = 1
 				} else { // index < i.lineIndex
 					frameIndexDelta = -1
 				}
 				var j int
-				for j = i.frameIndex; j >= 0 && j <= len(i.data.frames) && !i.data.frames[j].isLineInFrame(index); j += frameIndexDelta {}
+				for j = i.frameIndex; j >= 0 && j <= len(i.data.frames) && !i.data.frames[j].isLineInFrame(index); j += frameIndexDelta {
+				}
 				if j < 0 || j >= len(i.data.frames) {
 					panic(fmt.Sprintf("Internal error - wrong data frame index computed: %d", j))
 				}
@@ -109,32 +108,32 @@ func (i *LineIndex)IndexSet(index int, force bool) bool {
 	return result
 }
 
-func (i *LineIndex)IndexNext(delta int) bool {
+func (i *LineIndex) IndexNext(delta int) bool {
 	if delta == 0 {
 		return false
 	}
-	return i.IndexSet(i.lineIndex + delta, true)
+	return i.IndexSet(i.lineIndex+delta, true)
 }
 
-func (i *LineIndex)IndexIncrement() bool {
+func (i *LineIndex) IndexIncrement() bool {
 	return i.IndexNext(1)
 }
 
-func (i *LineIndex)IndexDecrement() bool {
+func (i *LineIndex) IndexDecrement() bool {
 	return i.IndexNext(-1)
 }
 
-func (i *LineIndex)IndexSetIfValid(index int) bool {
+func (i *LineIndex) IndexSetIfValid(index int) bool {
 	return i.IndexSet(index, false)
 }
 
-func (i *LineIndex)GetLine() (string, error) {
+func (i *LineIndex) GetLine() (string, error) {
 	if frame, err := i.data.getFrame(i.frameIndex); err != nil {
 		return "", err
 	} else {
-		j := i.lineIndex - frame.firstLine;
+		j := i.lineIndex - frame.firstLine
 		if j < 0 || j >= frame.noOfLines {
-			return "", errors.New(fmt.Sprintf("wrong line index (%s) in frame %d", j, i.frameIndex))
+			return "", errors.New(fmt.Sprintf("wrong line index (%d) in frame %d", j, i.frameIndex))
 		} else {
 			return frame.block.lines[j], nil
 		}
@@ -161,7 +160,7 @@ func NewBufferedData(blockSizeLimit int, totalSizeLimit int64) *BufferedData {
 }
 
 func NewBufferedDataMB(blockSizeLimitMB int, totalSizeLimitMB int) *BufferedData {
-	return NewBufferedData(blockSizeLimitMB * MB, int64(totalSizeLimitMB) * MB)
+	return NewBufferedData(blockSizeLimitMB*MB, int64(totalSizeLimitMB)*MB)
 }
 
 func NewBufferedDataDefault() *BufferedData {
@@ -173,7 +172,7 @@ func (buff *BufferedData) AddLine(line string) {
 	buff.mutex.Lock()
 	line = strings.TrimRight(line, " \t\r\n")
 	lineLength := len(line)
-	if len(buff.frames) == 0 || buff.lastBlockSize > 0 && buff.lastBlockSize + lineLength > buff.blockSizeLimit {
+	if len(buff.frames) == 0 || buff.lastBlockSize > 0 && buff.lastBlockSize+lineLength > buff.blockSizeLimit {
 		buff.frames = append(buff.frames, *newDataFrame(buff.Len()))
 		buff.lastBlockSize = 0
 	}
@@ -184,7 +183,6 @@ func (buff *BufferedData) AddLine(line string) {
 	lastFrame.noOfLines += 1
 	buff.lastBlockSize += lineLength
 }
-
 
 func (buff *BufferedData) Close() {
 	if buff.swapFile != nil {
@@ -199,8 +197,8 @@ func (buff *BufferedData) Close() {
 	buff.frames = nil
 }
 
-func (f *dataFrame)isLineInFrame(lineIndex int) bool {
-	return lineIndex >= f.firstLine  && lineIndex < f.firstLine + f.noOfLines
+func (f *dataFrame) isLineInFrame(lineIndex int) bool {
+	return lineIndex >= f.firstLine && lineIndex < f.firstLine+f.noOfLines
 }
 
 func (buff *BufferedData) Len() int {
@@ -212,20 +210,18 @@ func (buff *BufferedData) Len() int {
 	return f.firstLine + f.noOfLines
 }
 
-
 func newDataFrame(firstLine int) *dataFrame {
 	return &dataFrame{
 		offset:    -1,
 		firstLine: firstLine,
 		noOfLines: 0,
-		block:     &dataBlock{
+		block: &dataBlock{
 			lines: []string{},
-
 		},
 	}
 }
 
-func (buff *BufferedData)getFrame(frameIndex int) (*dataFrame, error) {
+func (buff *BufferedData) getFrame(frameIndex int) (*dataFrame, error) {
 	defer buff.mutex.Unlock()
 	buff.mutex.Lock()
 	length := len(buff.frames)
@@ -237,8 +233,7 @@ func (buff *BufferedData)getFrame(frameIndex int) (*dataFrame, error) {
 	return result, nil
 }
 
-
-func (buff *BufferedData)getWorkingFile() *os.File {
+func (buff *BufferedData) getWorkingFile() *os.File {
 	if buff.swapFile == nil {
 		var err error
 		buff.swapFile, err = ioutil.TempFile("", swapFileTemplate)
@@ -249,7 +244,7 @@ func (buff *BufferedData)getWorkingFile() *os.File {
 	return buff.swapFile
 }
 
-func (buff *BufferedData)unloadFrame(frame *dataFrame) {
+func (buff *BufferedData) unloadFrame(frame *dataFrame) {
 	if frame.block != nil {
 		if frame.offset < 0 {
 			f := buff.getWorkingFile()
@@ -276,10 +271,10 @@ func (buff *BufferedData)unloadFrame(frame *dataFrame) {
 	}
 }
 
-func (buff *BufferedData)loadFrame(frame *dataFrame) {
+func (buff *BufferedData) loadFrame(frame *dataFrame) {
 	if frame.block == nil {
 		f := buff.getWorkingFile()
-  		if frame.offset < 0 {
+		if frame.offset < 0 {
 			panic("internal error: loadFrame for empty block and frame offset < 0")
 		}
 		if _, err := f.Seek(frame.offset, 0); err != nil {
@@ -305,7 +300,7 @@ func (buff *BufferedData)loadFrame(frame *dataFrame) {
 	}
 }
 
-func (buff *BufferedData)reloadFrame(frame *dataFrame, frameIndex int) {
+func (buff *BufferedData) reloadFrame(frame *dataFrame, frameIndex int) {
 	if head := buff.lruFrames.Front(); head != nil && head.Value.(int) == frameIndex && frame.block != nil {
 		// No need to reload
 		return
@@ -320,10 +315,9 @@ func (buff *BufferedData)reloadFrame(frame *dataFrame, frameIndex int) {
 	if first := buff.lruFrames.Front(); first == nil || first.Value != frameIndex {
 		buff.lruFrames.PushFront(frameIndex)
 	}
-	if len := buff.lruFrames.Len(); len > 1 && int64(len) * int64(buff.blockSizeLimit) > buff.maxTotalSize {
+	if len := buff.lruFrames.Len(); len > 1 && int64(len)*int64(buff.blockSizeLimit) > buff.maxTotalSize {
 		last := buff.lruFrames.Back()
 		buff.unloadFrame(&(buff.frames[last.Value.(int)]))
 		buff.lruFrames.Remove(last)
 	}
 }
-

@@ -58,15 +58,20 @@ func (t *TextArea) drawRuler(screen tcell.Screen, x int, y int, textWidth int) {
 
 	for j := 0; j < 3; j++ {
 		line.WriteString(attr)
+		topPrintedDigits := 0
 		for c := 0; c < textWidth; c++ {
 			n := (c + t.firstColumn + 1)
 			digit := n % 10
 			switch j {
 			case 0:
 				if n%100 == 0 {
-					line.WriteString(strconv.Itoa(n / 100 % 100))
+					topPrintedDigits, _ = line.WriteString(strconv.Itoa(n / 100 % 100))
 				} else {
-					line.WriteRune(tcell.RuneVLine)
+					if topPrintedDigits > 1 {
+						topPrintedDigits--
+					} else {
+						line.WriteRune(tcell.RuneVLine)
+					}
 				}
 			case 1:
 				if digit == 0 {
@@ -100,10 +105,10 @@ func (t *TextArea) getRulerPosition() int {
 }
 
 const aReverse = "[::r]"
-const aNormal  = "[::-]"
+const aNormal = "[::-]"
 
 func numberString(n int, width int) string {
-	num :=strconv.Itoa(n)
+	num := strconv.Itoa(n)
 	l := len(num)
 	if l > width {
 		num = num[l-width:]
@@ -183,7 +188,7 @@ func (t *TextArea) Draw(screen tcell.Screen) {
 						if lineIndex == t.foundLine && t.foundStart >= 0 && t.foundEnd > firstColumnIdx {
 							var str strings.Builder
 							if firstColumnIdx < t.foundStart {
-								str.WriteString(theLine[firstColumnIdx: t.foundStart])
+								str.WriteString(theLine[firstColumnIdx:t.foundStart])
 							}
 							if lineIndex == t.pointedLine {
 								str.WriteString(aNormal)
@@ -233,7 +238,6 @@ func (t *TextArea) Draw(screen tcell.Screen) {
 	}
 }
 
-
 func (t *TextArea) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	return t.WrapInputHandler(func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 		t.view.statusBar.Reset()
@@ -245,7 +249,7 @@ func (t *TextArea) InputHandler() func(event *tcell.EventKey, setFocus func(p tv
 }
 
 var (
-	textAreaShortcuts = []shortcut {
+	textAreaShortcuts = []shortcut{
 		{key: tcell.KeyUp, action: view.ActionScrollUp},
 		{key: tcell.KeyDown, action: view.ActionScrollDown},
 		{key: tcell.KeyEnter, action: view.ActionScrollDown},
@@ -267,6 +271,8 @@ var (
 		{key: tcell.KeyEnd, mod: tcell.ModCtrl, action: view.ActionBottom},
 		{key: tcell.KeyLeft, action: view.ActionScrollRight},
 		{key: tcell.KeyRight, action: view.ActionScrollLeft},
+		{key: tcell.KeyLeft, mod: tcell.ModShift, action: view.ActionScrollFastRight},
+		{key: tcell.KeyRight, mod: tcell.ModShift, action: view.ActionScrollFastLeft},
 
 		{r: ' ', action: view.ActionPageDown},
 		{r: '/', action: view.ActionSearch},
@@ -281,7 +287,6 @@ var (
 		{r: '\\', action: view.ActionReset},
 		{r: 'g', action: view.ActionTop},
 		{r: 'G', action: view.ActionBottom},
-
 
 		{r: 'q', action: view.ActionQuit},
 		{key: tcell.KeyEscape, action: view.ActionQuit},

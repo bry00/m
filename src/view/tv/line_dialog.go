@@ -10,7 +10,7 @@ import (
 type LineDialog struct {
 	*tview.Form
 	view        *View
-	startOfEdit  bool
+	startOfEdit bool
 }
 
 func newLineDialog(view *View) (dialog *LineDialog, width int, height int) {
@@ -18,7 +18,7 @@ func newLineDialog(view *View) (dialog *LineDialog, width int, height int) {
 	height = 7
 
 	form := tview.NewForm().
-		AddInputField("Line: ", "", width - 10, func(textToCheck string, lastChar rune) bool {
+		AddInputField("Line: ", "", width-10, func(textToCheck string, lastChar rune) bool {
 			if unicode.IsDigit(lastChar) {
 				return true
 			}
@@ -26,8 +26,8 @@ func newLineDialog(view *View) (dialog *LineDialog, width int, height int) {
 		}, nil)
 
 	dialog = &LineDialog{
-		Form:  form,
-		view:  view,
+		Form: form,
+		view: view,
 	}
 	cancelFun := func() {
 		view.GetStatusBar().Reset()
@@ -86,22 +86,21 @@ func newLineDialog(view *View) (dialog *LineDialog, width int, height int) {
 	return
 }
 
-func (s *LineDialog)Display() {
+func (s *LineDialog) Display() {
 	s.view.pages.ShowPage(pageGoToLine)
 	s.view.app.SetFocus(s.GetLineField())
 	s.startOfEdit = true
 	s.view.app.QueueEvent(tcell.NewEventKey(tcell.KeyHome, 0, 0))
 }
 
-func (s *LineDialog)GetLineField() *tview.InputField {
+func (s *LineDialog) GetLineField() *tview.InputField {
 	return s.GetFormItem(0).(*tview.InputField)
 }
 
-func (s *LineDialog)GetLineNo() int {
+func (s *LineDialog) GetLineNo() int {
 	if result, err := strconv.Atoi(s.GetLineField().GetText()); err != nil {
 		return 0
 	} else {
 		return result
 	}
 }
-

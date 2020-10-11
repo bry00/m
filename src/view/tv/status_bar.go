@@ -30,8 +30,8 @@ func (sb *StatusBar) Reset() {
 }
 
 func (sb *StatusBar) Message(format string, a ...interface{}) {
-		text := fmt.Sprintf(format, a...)
-		sb.text = &text
+	text := fmt.Sprintf(format, a...)
+	sb.text = &text
 }
 
 func (sb *StatusBar) SafeMessage(format string, a ...interface{}) {
@@ -41,7 +41,7 @@ func (sb *StatusBar) SafeMessage(format string, a ...interface{}) {
 }
 
 func (sb *StatusBar) Status(status view.AppStatus) {
-		sb.status = status
+	sb.status = status
 }
 
 func (sb *StatusBar) SafeStatus(status view.AppStatus) {
