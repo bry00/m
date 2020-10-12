@@ -34,6 +34,7 @@ const (
 	ActionReset
 	ActionShortcuts
 )
+const lastAction = int(ActionShortcuts)
 
 var actionNames = []string{
 	"unknown",

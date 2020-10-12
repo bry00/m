@@ -179,6 +179,7 @@ func (t *TextArea) Draw(screen tcell.Screen) {
 						tview.Print(screen, numberString(lineIndex+1, nummbersWidth),
 							xBase, y, nummbersWidth, tview.AlignLeft, numbersColor)
 					}
+
 					theLine := tview.Escape(strings.Replace(line, "\t", tabSpaces, -1))
 
 					if t.firstColumn >= utf8.RuneCountInString(theLine) {
